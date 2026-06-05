@@ -327,6 +327,144 @@
       .charts-row2 { grid-template-columns: 1fr; }
       .profile-grid { grid-template-columns: 1fr; }
     }
+
+    /* ── MAPA INTERACTIVO GRID DE ESCRITORIO ── */
+    .map-header-desktop {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px; flex-wrap: wrap; gap: 12px;
+    }
+    .map-stats-mini {
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .stat-chip-mini {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700;
+      border: 1px solid var(--border); background: var(--bg2);
+    }
+    .filter-btn-group {
+      display: flex; gap: 4px; background: rgba(0,36,84,0.05); padding: 4px; border-radius: 10px;
+    }
+    .filter-btn {
+      padding: 6px 12px; border-radius: 8px; border: none; background: none;
+      font-size: 11px; font-weight: 700; cursor: pointer; color: var(--text2);
+      transition: all 0.2s;
+    }
+    .filter-btn.active {
+      background: var(--blue); color: #fff;
+    }
+
+    .lot-desktop {
+      background: #0f172a;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      padding: 16px;
+      overflow: hidden;
+    }
+    .lot-grid-sectors {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 1200px) {
+      .lot-grid-sectors { grid-template-columns: 1fr; }
+    }
+    .sector-block-desktop {
+      background: #1e293b; border-radius: 14px; padding: 12px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .sector-title-desktop {
+      font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 0.1em;
+      text-transform: uppercase; margin-bottom: 8px; display: flex; justify-content: space-between;
+    }
+    .spaces-row-desktop {
+      display: grid; grid-template-columns: repeat(15, 1fr); gap: 4px; margin-bottom: 4px;
+    }
+    .sector-block-desktop.sector-d .spaces-row-desktop {
+      grid-template-columns: repeat(20, 1fr);
+    }
+    .lane-desktop {
+      height: 12px; display: flex; align-items: center; justify-content: center;
+      background: #0f172a; border-radius: 4px; margin: 6px 0; color: rgba(250,204,21,0.25);
+      font-size: 8px; font-weight: 700; letter-spacing: 0.2em; position: relative;
+    }
+    .lane-desktop::before {
+      content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px;
+      background: repeating-linear-gradient(90deg, #facc15 0, #facc15 6px, transparent 6px, transparent 12px);
+      opacity: 0.15; transform: translateY(-50%);
+    }
+    
+    .sp-desktop {
+      aspect-ratio: 1; border-radius: 6px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; cursor: pointer;
+      border: 1.5px solid transparent; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      user-select: none; position: relative;
+    }
+    .sp-desktop:hover {
+      transform: scale(1.1); z-index: 5; box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+    }
+    .sp-desktop.libre {
+      background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.3); color: var(--libre);
+    }
+    .sp-desktop.ocupado {
+      background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.4); color: var(--ocupado);
+    }
+    .sp-desktop.reservado {
+      background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.4); color: var(--res);
+    }
+    .sp-desktop.reservado.my-reserva {
+      border-color: var(--accent); box-shadow: 0 0 8px var(--accent); animation: pulseReserva 2s infinite;
+    }
+    @keyframes pulseReserva {
+      0%, 100% { box-shadow: 0 0 4px var(--accent); }
+      50% { box-shadow: 0 0 12px var(--accent); }
+    }
+    .sp-desktop.bloqueado {
+      background: rgba(148,163,184,0.15); border-color: rgba(148,163,184,0.3); color: var(--bloq);
+    }
+    
+    .sp-num-desktop { font-size: 8px; font-weight: 800; line-height: 1; }
+    .sp-ico-desktop { font-size: 8px; margin-top: 1px; }
+
+    /* Modales interactivos de escritorio */
+    .modal-overlay-desktop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+      z-index: 250; display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.25s;
+    }
+    .modal-overlay-desktop.open {
+      opacity: 1; pointer-events: all;
+    }
+    .modal-desktop {
+      background: var(--bg2); border-radius: 20px; border: 1px solid var(--border);
+      box-shadow: var(--shadow-lg); width: 100%; max-width: 440px; padding: 24px;
+      transform: translateY(12px); transition: transform 0.25s;
+    }
+    .modal-overlay-desktop.open .modal-desktop {
+      transform: translateY(0);
+    }
+    .modal-title-desktop {
+      font-size: 16px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .modal-close-desktop {
+      background: none; border: none; font-size: 18px; cursor: pointer; color: var(--text2);
+    }
+    
+    /* Formularios */
+    .form-group-desktop {
+      margin-bottom: 14px;
+    }
+    .form-label-desktop {
+      display: block; font-size: 11px; font-weight: 700; color: var(--text2);
+      text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;
+    }
+    .form-input-desktop {
+      width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
+      border-radius: 10px; font-size: 13px; font-family: inherit; color: var(--text);
+      background: #f8fafc; outline: none; transition: all 0.2s;
+    }
+    .form-input-desktop:focus {
+      border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0,36,84,0.1); background: #fff;
+    }
   </style>
 </head>
 <body>
@@ -459,10 +597,36 @@
 
       <!-- ── MAPA VIEW ── -->
       <div class="view" id="view-mapa">
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:20px">
-          <h3 style="margin-bottom:12px;font-size:15px;">🗺️ Mapa de espacios — ver guardia.html</h3>
-          <p style="color:var(--text2);font-size:13px;line-height:1.6">El mapa interactivo de 110 espacios está en la app del guardia (diseñada para móvil). <br>Puedes abrirla desde aquí:</p>
-          <a href="./guardia.html" style="display:inline-block;margin-top:14px;padding:12px 20px;background:var(--accent);color:#fff;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;">Abrir App Guardia →</a>
+        <!-- Header con Stats y Filtros -->
+        <div class="map-header-desktop">
+          <div class="map-stats-mini">
+            <div class="stat-chip-mini" style="border-left: 3px solid var(--libre)">
+              <span style="color:var(--libre)">🟢</span>&nbsp;<strong id="m-stat-libre">0</strong>&nbsp;Libres
+            </div>
+            <div class="stat-chip-mini" style="border-left: 3px solid var(--ocupado)">
+              <span style="color:var(--ocupado)">🔴</span>&nbsp;<strong id="m-stat-ocup">0</strong>&nbsp;Ocupados
+            </div>
+            <div class="stat-chip-mini" style="border-left: 3px solid var(--res)">
+              <span style="color:var(--res)">🟡</span>&nbsp;<strong id="m-stat-res">0</strong>&nbsp;Reservados
+            </div>
+            <div class="stat-chip-mini" style="border-left: 3px solid var(--bloq)">
+              <span style="color:var(--bloq)">⚫</span>&nbsp;<strong id="m-stat-bloq">0</strong>&nbsp;Bloqueados
+            </div>
+          </div>
+          <div class="filter-btn-group">
+            <button class="filter-btn active" onclick="filterMapSector('ALL', this)">Todos</button>
+            <button class="filter-btn" onclick="filterMapSector('A', this)">Sector A</button>
+            <button class="filter-btn" onclick="filterMapSector('B', this)">Sector B</button>
+            <button class="filter-btn" onclick="filterMapSector('C', this)">Sector C</button>
+            <button class="filter-btn" onclick="filterMapSector('D', this)">Sector D</button>
+          </div>
+        </div>
+
+        <!-- Lot Grid -->
+        <div class="lot-desktop">
+          <div class="lot-grid-sectors" id="lotGridSectors">
+            <!-- Sectores se generan dinámicamente -->
+          </div>
         </div>
       </div>
 
@@ -472,7 +636,7 @@
           <div class="table-header">
             <h3>📋 Mis reservas activas</h3>
             <div class="table-actions">
-              <button class="btn-sm btn-primary" onclick="showToast('Funcionalidad próximamente')">+ Nueva reserva</button>
+              <button class="btn-sm btn-primary" onclick="abrirNuevaReservaForm()">+ Nueva reserva</button>
             </div>
           </div>
           <table>
@@ -534,6 +698,82 @@
     </div><!-- /content -->
   </div><!-- /main -->
 </div><!-- /app -->
+
+<!-- MODALS PARA EL MAPA Y CREACIÓN DE RESERVAS -->
+<div class="modal-overlay-desktop" id="reservaModal">
+  <div class="modal-desktop" style="background: var(--bg2); color: var(--text);">
+    <div class="modal-title-desktop">
+      <strong>📋 Crear Nueva Reserva</strong>
+      <button class="modal-close-desktop" onclick="closeReservaModal()">✕</button>
+    </div>
+    <form id="reservaForm" onsubmit="handleCrearReserva(event)">
+      <div class="form-group-desktop" id="groupSpaceSelect">
+        <label class="form-label-desktop">Espacio a Reservar</label>
+        <select class="form-input-desktop" id="resEspacioSelect" onchange="onResEspacioSelectChange()">
+          <!-- Opciones cargadas dinámicamente -->
+        </select>
+        <input class="form-input-desktop" id="resEspacioInput" type="text" readonly style="display:none; font-weight:700; background:#e2e8f0;">
+      </div>
+      <div class="form-group-desktop">
+        <label class="form-label-desktop">Sector</label>
+        <input class="form-input-desktop" id="resSector" type="text" readonly style="background:#e2e8f0;">
+      </div>
+      <div class="form-group-desktop">
+        <label class="form-label-desktop">Fecha</label>
+        <input class="form-input-desktop" id="resFecha" type="date" required>
+      </div>
+      <div style="display:flex; gap:12px;">
+        <div class="form-group-desktop" style="flex:1;">
+          <label class="form-label-desktop">Hora Inicio</label>
+          <input class="form-input-desktop" id="resHoraInicio" type="time" required value="08:00">
+        </div>
+        <div class="form-group-desktop" style="flex:1;">
+          <label class="form-label-desktop">Hora Fin</label>
+          <input class="form-input-desktop" id="resHoraFin" type="time" required value="12:00">
+        </div>
+      </div>
+      <div class="form-group-desktop">
+        <label class="form-label-desktop">Patente del Vehículo</label>
+        <input class="form-input-desktop" id="resPatente" type="text" placeholder="Ej: GHJK12" required maxlength="6" style="text-transform:uppercase;">
+      </div>
+      <div class="form-group-desktop">
+        <label class="form-label-desktop">Motivo / Área</label>
+        <input class="form-input-desktop" id="resMotivo" type="text" placeholder="Ej: Clase Docente Informática" required>
+      </div>
+      <div style="margin-top:20px; display:flex; gap:10px;">
+        <button class="btn-sm btn-outline" type="button" onclick="closeReservaModal()" style="flex:1; padding:12px;">Cancelar</button>
+        <button class="btn-sm btn-primary" type="submit" style="flex:2; padding:12px;">Confirmar Reserva</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay-desktop" id="spaceDetailsModal">
+  <div class="modal-desktop" style="background: var(--bg2); color: var(--text);">
+    <div class="modal-title-desktop">
+      <span id="detSpaceNum" style="font-weight:800;">Espacio E-XX</span>
+      <button class="modal-close-desktop" onclick="closeSpaceDetailsModal()">✕</button>
+    </div>
+    <div style="margin-bottom:16px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+        <div id="detSpaceBadge" style="padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700;">Libre</div>
+        <div id="detSpaceSector" style="font-size:12px; color:var(--text2);">Sector A</div>
+      </div>
+      <div id="detUserInfo" style="display:none; background:#f8fafc; border:1px solid var(--border); border-radius:12px; padding:12px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div id="detUserAvatar"></div>
+          <div>
+            <div id="detUserName" style="font-size:13px; font-weight:700;">Conductor</div>
+            <div id="detUserPlate" style="font-size:11px; font-family:monospace; background:#fff; border:1px solid var(--border); border-radius:4px; padding:1px 6px; display:inline-block; margin-top:2px;">Patente</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="detActions" style="display:flex; flex-direction:column; gap:8px;">
+      <!-- Botones dinámicos de acción -->
+    </div>
+  </div>
+</div>
 
 <div class="toast" id="toast"></div>
 
@@ -608,6 +848,7 @@
     ],
     profesor: [
       { id:'inicio',   ico:'🏠', label:'Inicio' },
+      { id:'mapa',     ico:'🗺️', label:'Mapa de espacios' },
       { id:'reservas', ico:'📋', label:'Mis reservas' },
       { id:'perfil',   ico:'👤', label:'Mi perfil' },
     ]
@@ -655,6 +896,7 @@
 
     if (name === 'inicio' && !chartsInit) { chartsInit = true; initCharts(); }
     if (name === 'inicio' && !mapInit) { mapInit = true; setTimeout(initMap, 100); }
+    if (name === 'mapa') buildDesktopMap();
     if (name === 'usuarios') renderUsers();
     if (name === 'reservas') renderReservas();
     if (name === 'perfil') renderPerfil();
@@ -783,17 +1025,31 @@
   /* ── RESERVAS TABLE (con QR) ────────────────────── */
   function renderReservas() {
     var tbody = document.getElementById('reservasBody');
-    tbody.innerHTML = '';
-    MOCK_RESERVAS.forEach(function(r) {
-      var tr = document.createElement('tr');
-      var badgeClass = r.estado === 'activa' ? 'active' : 'pending';
-      var token = window.DuocAPI.nuevoTokenReserva(r.espacio.replace('E-',''));
-      var qrUrl = window.DuocAPI.generarQR(token, 60);
-      tr.innerHTML = '<td><strong>' + r.espacio + '</strong></td><td>Sector ' + r.sector + '</td><td>' + r.fecha + '</td><td>' + r.hora + '</td>' +
-        '<td><span class="badge ' + badgeClass + '">' + r.estado + '</span></td>' +
-        '<td><button class="action-btn" onclick="verQR(\'' + qrUrl + '\',\'' + r.espacio + '\')">📱 Ver QR</button><button class="action-btn" onclick="showToast(\'Reserva cancelada\')">✕ Cancelar</button></td>';
-      tbody.appendChild(tr);
-    });
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text2)">Cargando reservas...</td></tr>';
+
+    function pintar(lista) {
+      tbody.innerHTML = '';
+      if (!lista || lista.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text2)">No tienes reservas activas</td></tr>';
+        return;
+      }
+      lista.forEach(function(r) {
+        var tr = document.createElement('tr');
+        var badgeClass = r.estado === 'activa' ? 'active' : 'pending';
+        var num = r.espacio.replace('E-','');
+        var token = r.qr_token || window.DuocAPI.nuevoTokenReserva(num);
+        var qrUrl = window.DuocAPI.generarQR(token, 200);
+        tr.innerHTML = '<td><strong>' + r.espacio + '</strong></td><td>Sector ' + r.sector + '</td><td>' + r.fecha + '</td><td>' + r.hora + '</td>' +
+          '<td><span class="badge ' + badgeClass + '">' + r.estado + '</span></td>' +
+          '<td>' +
+            '<button class="action-btn" onclick="verQR(\'' + qrUrl + '\',\'' + r.espacio + '\')">📱 Ver QR</button>' +
+            '<button class="action-btn" onclick="cancelarReservaClick(\'' + r.id + '\',\'' + num + '\')">✕ Cancelar</button>' +
+          '</td>';
+        tbody.appendChild(tr);
+      });
+    }
+
+    pintar(activeReservasCache);
   }
 
   /* ── MODAL QR ───────────────────────────────────── */
@@ -1000,6 +1256,7 @@
         donutChartInst.update();
       }
       updateKPIs();
+      buildDesktopMap();
     });
 
     // 2) Suscribirse a Realtime (cambios de los guardias)
@@ -1015,6 +1272,7 @@
       document.getElementById('k-ocup').textContent  = st.ocup;
       document.getElementById('k-pct').textContent   = Math.round(st.ocup/110*100) + '% ocupación';
       showToast('🔴 E-' + id + ' → ' + nuevo.estado);
+      buildDesktopMap();
     });
 
     // Indicador de conexión
@@ -1038,16 +1296,423 @@
     window.location.href = './index.html';
   };
 
+  /* ── CACHE DE RESERVAS E INICIALIZACIÓN ─────────── */
+  var activeReservasCache = [];
+
+  function loadReservationsCache(callback) {
+    if (ONLINE) {
+      window.DuocAPI.getReservasUsuario(auth.email).then(function(rows) {
+        activeReservasCache = rows && rows.length ? rows : [];
+        if (callback) callback();
+      }).catch(function(){
+        activeReservasCache = MOCK_RESERVAS;
+        if (callback) callback();
+      });
+    } else {
+      activeReservasCache = MOCK_RESERVAS;
+      if (callback) callback();
+    }
+  }
+
+  /* ── LOGIC FOR MAP, BOOKING AND CANCELLATIONS ────── */
+  var activeSectorFilter = 'ALL';
+
+  window.filterMapSector = function(sector, btn) {
+    activeSectorFilter = sector;
+    document.querySelectorAll('.filter-btn').forEach(function(b) {
+      b.classList.remove('active');
+    });
+    if (btn) btn.classList.add('active');
+    buildDesktopMap();
+  };
+
+  window.onResEspacioSelectChange = function() {
+    var val = document.getElementById('resEspacioSelect').value;
+    if (val && SPACES[val]) {
+      document.getElementById('resSector').value = 'Sector ' + SPACES[val].sector;
+    }
+  };
+
+  window.abrirNuevaReservaForm = function(preselectedSpaceId) {
+    var selectEl = document.getElementById('resEspacioSelect');
+    var inputEl  = document.getElementById('resEspacioInput');
+    
+    var today = new Date().toISOString().slice(0, 10);
+    document.getElementById('resFecha').value = today;
+    document.getElementById('resHoraInicio').value = '08:00';
+    document.getElementById('resHoraFin').value = '12:00';
+    document.getElementById('resPatente').value = '';
+    document.getElementById('resMotivo').value = '';
+
+    if (preselectedSpaceId) {
+      selectEl.style.display = 'none';
+      inputEl.style.display = 'block';
+      inputEl.value = preselectedSpaceId;
+      document.getElementById('resSector').value = 'Sector ' + SPACES[preselectedSpaceId].sector;
+    } else {
+      selectEl.style.display = 'block';
+      inputEl.style.display = 'none';
+      
+      selectEl.innerHTML = '';
+      var hasLibre = false;
+      Object.keys(SPACES).forEach(function(k) {
+        var sp = SPACES[k];
+        if (sp.estado === 'libre') {
+          var opt = document.createElement('option');
+          opt.value = sp.id;
+          opt.textContent = 'Espacio E-' + sp.id + ' (Sector ' + sp.sector + ')';
+          selectEl.appendChild(opt);
+          hasLibre = true;
+        }
+      });
+      if (!hasLibre) {
+        selectEl.innerHTML = '<option value="">No hay espacios libres disponibles</option>';
+      } else {
+        onResEspacioSelectChange();
+      }
+    }
+    
+    document.getElementById('reservaModal').classList.add('open');
+  };
+
+  window.closeReservaModal = function() {
+    document.getElementById('reservaModal').classList.remove('open');
+  };
+
+  window.handleCrearReserva = function(e) {
+    e.preventDefault();
+    var selectEl = document.getElementById('resEspacioSelect');
+    var inputEl  = document.getElementById('resEspacioInput');
+    
+    var num = selectEl.style.display === 'none' ? parseInt(inputEl.value) : parseInt(selectEl.value);
+    var fecha = document.getElementById('resFecha').value;
+    var horaInicio = document.getElementById('resHoraInicio').value;
+    var horaFin = document.getElementById('resHoraFin').value;
+    var patente = document.getElementById('resPatente').value.trim().toUpperCase();
+    var motivo = document.getElementById('resMotivo').value.trim();
+
+    if (!num || !fecha || !horaInicio || !horaFin || !patente || !motivo) {
+      alert('Por favor complete todos los campos.');
+      return;
+    }
+
+    if (ONLINE) {
+      window.DuocAPI.crearReserva(auth.email, num, motivo, fecha, horaInicio, horaFin).then(function(res) {
+        if (res && res.success) {
+          showToast('✅ Reserva del espacio E-' + num + ' creada con éxito');
+          if (SPACES[num]) {
+            SPACES[num].estado = 'reservado';
+            SPACES[num].conductor = auth.name;
+            SPACES[num].patente = patente;
+          }
+          closeReservaModal();
+          loadReservationsCache(function() {
+            switchView('reservas');
+            renderReservas();
+            buildDesktopMap();
+            updateKPIs();
+            if (donutChartInst) {
+              var st = countStats();
+              donutChartInst.data.datasets[0].data = [st.libre, st.ocup, st.res, st.bloq];
+              donutChartInst.update();
+            }
+          });
+        } else {
+          showToast('❌ Error al crear reserva: ' + (res.error || 'Verifique los datos'));
+        }
+      }).catch(function(){ showToast('❌ Error al conectar con el servidor'); });
+    } else {
+      var newRes = {
+        id: 'mock-' + Date.now(),
+        espacio: 'E-' + num,
+        sector: num <= 30 ? 'A' : num <= 60 ? 'B' : num <= 90 ? 'C' : 'D',
+        fecha: fecha.split('-').reverse().join('-'),
+        hora: horaInicio + '–' + horaFin,
+        estado: 'activa'
+      };
+      MOCK_RESERVAS.unshift(newRes);
+      if (SPACES[num]) {
+        SPACES[num].estado = 'reservado';
+        SPACES[num].conductor = auth.name;
+        SPACES[num].patente = patente;
+      }
+      showToast('✅ Reserva del espacio E-' + num + ' creada con éxito');
+      closeReservaModal();
+      loadReservationsCache(function() {
+        switchView('reservas');
+        renderReservas();
+        buildDesktopMap();
+        updateKPIs();
+        if (donutChartInst) {
+          var st = countStats();
+          donutChartInst.data.datasets[0].data = [st.libre, st.ocup, st.res, st.bloq];
+          donutChartInst.update();
+        }
+      });
+    }
+  };
+
+  window.cancelarReservaClick = function(reservaId, numeroEspacio) {
+    if (confirm('¿Estás seguro de que deseas cancelar la reserva del espacio E-' + numeroEspacio + '?')) {
+      if (ONLINE) {
+        window.DuocAPI.cancelarReserva(reservaId, numeroEspacio).then(function(res) {
+          if (res && res.success) {
+            showToast('✅ Reserva del espacio E-' + numeroEspacio + ' cancelada con éxito');
+            if (SPACES[numeroEspacio]) {
+              SPACES[numeroEspacio].estado = 'libre';
+              SPACES[numeroEspacio].conductor = null;
+              SPACES[numeroEspacio].patente = null;
+            }
+            loadReservationsCache(function() {
+              renderReservas();
+              buildDesktopMap();
+              updateKPIs();
+              if (donutChartInst) {
+                var st = countStats();
+                donutChartInst.data.datasets[0].data = [st.libre, st.ocup, st.res, st.bloq];
+                donutChartInst.update();
+              }
+            });
+          } else {
+            showToast('❌ Error al cancelar la reserva: ' + (res.error || 'Intente nuevamente'));
+          }
+        }).catch(function(){ showToast('❌ Error al conectar con el servidor'); });
+      } else {
+        MOCK_RESERVAS = MOCK_RESERVAS.filter(function(r) {
+          return r.espacio !== 'E-' + numeroEspacio;
+        });
+        if (SPACES[numeroEspacio]) {
+          SPACES[numeroEspacio].estado = 'libre';
+          SPACES[numeroEspacio].conductor = null;
+          SPACES[numeroEspacio].patente = null;
+        }
+        showToast('✅ Reserva del espacio E-' + numeroEspacio + ' cancelada con éxito');
+        loadReservationsCache(function() {
+          renderReservas();
+          buildDesktopMap();
+          updateKPIs();
+          if (donutChartInst) {
+            var st = countStats();
+            donutChartInst.data.datasets[0].data = [st.libre, st.ocup, st.res, st.bloq];
+            donutChartInst.update();
+          }
+        });
+      }
+    }
+  };
+
+  window.openSpaceDetailsModal = function(id) {
+    var sp = SPACES[id];
+    if (!sp) return;
+    
+    document.getElementById('detSpaceNum').textContent = 'Espacio E-' + id;
+    document.getElementById('detSpaceSector').textContent = 'Sector ' + sp.sector;
+    
+    var badge = document.getElementById('detSpaceBadge');
+    badge.textContent = sp.estado.toUpperCase();
+    badge.className = '';
+    
+    var bgColors = { libre: '#10B981', ocupado: '#EF4444', reservado: '#F59E0B', bloqueado: '#94a3b8' };
+    badge.style.background = bgColors[sp.estado] || '#94a3b8';
+    badge.style.color = '#fff';
+    
+    var userInfo = document.getElementById('detUserInfo');
+    var userAvatar = document.getElementById('detUserAvatar');
+    var userName = document.getElementById('detUserName');
+    var userPlate = document.getElementById('detUserPlate');
+    
+    if (sp.conductor && (sp.estado === 'ocupado' || sp.estado === 'reservado')) {
+      userInfo.style.display = 'block';
+      userAvatar.innerHTML = window.personaAvatar(sp.conductor, 40, 'var(--blue)');
+      userName.textContent = sp.conductor;
+      userPlate.textContent = sp.patente || 'SIN PATENTE';
+    } else {
+      userInfo.style.display = 'none';
+    }
+    
+    var detActions = document.getElementById('detActions');
+    detActions.innerHTML = '';
+    
+    var isMyReserva = false;
+    var userResObj = activeReservasCache.find(function(r) {
+      return r.espacio === 'E-' + id;
+    });
+    if (userResObj) {
+      isMyReserva = true;
+    } else if (sp.estado === 'reservado' && sp.conductor === auth.name) {
+      isMyReserva = true;
+    }
+    
+    if (isMyReserva) {
+      var badgeMy = document.createElement('div');
+      badgeMy.textContent = '⭐ TU RESERVA ACTIVA';
+      badgeMy.style.cssText = 'background:rgba(255,184,28,0.15); color:var(--blue); border:1.5px solid var(--accent); padding:8px; border-radius:10px; font-size:11px; font-weight:700; text-align:center; margin-bottom:8px;';
+      detActions.appendChild(badgeMy);
+      
+      var btnQR = document.createElement('button');
+      btnQR.className = 'btn-sm btn-primary';
+      btnQR.style.padding = '10px';
+      btnQR.textContent = '📱 Mostrar Código QR';
+      btnQR.onclick = function() {
+        closeSpaceDetailsModal();
+        var num = String(id);
+        var token = userResObj ? userResObj.qr_token : window.DuocAPI.nuevoTokenReserva(num);
+        var qrUrl = window.DuocAPI.generarQR(token, 200);
+        verQR(qrUrl, 'E-' + id);
+      };
+      detActions.appendChild(btnQR);
+      
+      var btnCancel = document.createElement('button');
+      btnCancel.className = 'btn-sm btn-outline';
+      btnCancel.style.padding = '10px';
+      btnCancel.style.borderColor = '#EF4444';
+      btnCancel.style.color = '#EF4444';
+      btnCancel.textContent = '✕ Cancelar Reserva';
+      btnCancel.onclick = function() {
+        closeSpaceDetailsModal();
+        var resId = userResObj ? userResObj.id : 'mock';
+        cancelarReservaClick(resId, id);
+      };
+      detActions.appendChild(btnCancel);
+    } else if (sp.estado === 'libre') {
+      var btnReserve = document.createElement('button');
+      btnReserve.className = 'btn-sm btn-primary';
+      btnReserve.style.padding = '10px';
+      btnReserve.textContent = '📋 Reservar este espacio';
+      btnReserve.onclick = function() {
+        closeSpaceDetailsModal();
+        abrirNuevaReservaForm(id);
+      };
+      detActions.appendChild(btnReserve);
+    } else {
+      var descMsg = document.createElement('div');
+      descMsg.style.cssText = 'font-size:12px; color:var(--text2); text-align:center; padding:10px;';
+      if (sp.estado === 'ocupado') {
+        descMsg.textContent = 'Este espacio se encuentra ocupado actualmente por otro vehículo.';
+      } else if (sp.estado === 'reservado') {
+        descMsg.textContent = 'Este espacio se encuentra reservado por otro docente.';
+      } else {
+        descMsg.textContent = 'Este espacio se encuentra bloqueado por mantención o limpieza.';
+      }
+      detActions.appendChild(descMsg);
+    }
+    
+    document.getElementById('spaceDetailsModal').classList.add('open');
+  };
+
+  window.closeSpaceDetailsModal = function() {
+    document.getElementById('spaceDetailsModal').classList.remove('open');
+  };
+
+  function buildDesktopMap() {
+    var lot = document.getElementById('lotGridSectors');
+    if (!lot) return;
+    
+    lot.innerHTML = '';
+    
+    var sectors = [
+      { id: 'A', label:'SECTOR A (Espacios 1 a 30)', rows:[[1,15],[16,30]] },
+      { id: 'B', label:'SECTOR B (Espacios 31 a 60)', rows:[[31,45],[46,60]] },
+      { id: 'C', label:'SECTOR C (Espacios 61 a 90)', rows:[[61,75],[76,90]] },
+      { id: 'D', label:'SECTOR D (Espacios 91 a 110)', rows:[[91,110]] },
+    ];
+    
+    var filteredSectors = sectors.filter(function(sec) {
+      return activeSectorFilter === 'ALL' || activeSectorFilter === sec.id;
+    });
+
+    if (activeSectorFilter !== 'ALL') {
+      lot.style.gridTemplateColumns = '1fr';
+    } else {
+      lot.style.gridTemplateColumns = '';
+    }
+
+    filteredSectors.forEach(function(sec) {
+      var block = document.createElement('div');
+      block.className = 'sector-block-desktop sector-' + sec.id.toLowerCase();
+      
+      var header = document.createElement('div');
+      header.className = 'sector-title-desktop';
+      header.innerHTML = '<span>' + sec.label + '</span>';
+      block.appendChild(header);
+      
+      var rowsContainer = document.createElement('div');
+      rowsContainer.style.display = 'flex';
+      rowsContainer.style.flexDirection = 'column';
+      rowsContainer.style.gap = '4px';
+
+      sec.rows.forEach(function(range, ri) {
+        var row = document.createElement('div');
+        row.className = 'spaces-row-desktop';
+        
+        for (var n = range[0]; n <= range[1]; n++) {
+          var sp = SPACES[n];
+          if (!sp) continue;
+          
+          var cell = document.createElement('div');
+          
+          var isMyRes = false;
+          if (activeReservasCache && activeReservasCache.length) {
+            isMyRes = activeReservasCache.some(function(r) {
+              return r.espacio === 'E-' + sp.id;
+            });
+          } else if (sp.estado === 'reservado' && sp.conductor === auth.name) {
+            isMyRes = true;
+          }
+
+          var extraCls = isMyRes ? ' my-reserva' : '';
+          cell.className = 'sp-desktop ' + sp.estado + extraCls;
+          cell.id = 'sp-desktop-' + sp.id;
+          
+          var icons = { libre: '', ocupado: '🚗', reservado: isMyRes ? '★' : '📋', bloqueado: '🔒' };
+          cell.innerHTML = '<span class="sp-num-desktop">' + sp.id + '</span><span class="sp-ico-desktop">' + (icons[sp.estado] || '') + '</span>';
+          
+          var tooltip = 'Espacio E-' + sp.id + ' (' + sp.estado.toUpperCase() + ')';
+          if (sp.estado === 'ocupado' || sp.estado === 'reservado') {
+            tooltip += '\nConductor: ' + (sp.conductor || 'No asignado');
+            if (isMyRes) tooltip += ' (Tu reserva)';
+          }
+          cell.setAttribute('title', tooltip);
+          
+          cell.onclick = (function(spaceId) {
+            return function() { openSpaceDetailsModal(spaceId); };
+          })(sp.id);
+          
+          row.appendChild(cell);
+        }
+        rowsContainer.appendChild(row);
+        
+        if (ri < sec.rows.length - 1) {
+          var lane = document.createElement('div');
+          lane.className = 'lane-desktop';
+          lane.innerHTML = '<span>LANE</span>';
+          rowsContainer.appendChild(lane);
+        }
+      });
+      
+      block.appendChild(rowsContainer);
+      lot.appendChild(block);
+    });
+
+    var st = countStats();
+    document.getElementById('m-stat-libre').textContent = st.libre;
+    document.getElementById('m-stat-ocup').textContent = st.ocup;
+    document.getElementById('m-stat-res').textContent = st.res;
+    document.getElementById('m-stat-bloq').textContent = st.bloq;
+  }
+
   /* ── INIT ───────────────────────────────────────── */
   buildSidebar();
   initClock();
   renderPerfil();
-  // Gráficos primero, luego Supabase (para que los charts ya existan)
-  setTimeout(function() {
-    initCharts(); chartsInit = true;
-    initMap();    mapInit = true;
-    initSupabase();
-  }, 200);
+  // Cargar reservas en caché e inicializar
+  loadReservationsCache(function() {
+    setTimeout(function() {
+      initCharts(); chartsInit = true;
+      initMap();    mapInit = true;
+      initSupabase();
+    }, 200);
+  });
 
 })();
 </script>

@@ -257,7 +257,7 @@ window.DuocAPI = (function () {
   async function login(email, password) {
     if (!_online) return null;
     var r = await _client.from('usuarios')
-      .select('nombre, email, rol, cargo, password_hash, activo')
+      .select('id, nombre, email, rol, cargo, password_hash, activo')
       .eq('email', email.toLowerCase())
       .single();
     if (r.error || !r.data) return null;
@@ -267,6 +267,7 @@ window.DuocAPI = (function () {
     _client.from('usuarios').update({ ultimo_acceso: new Date().toISOString() })
       .eq('email', email.toLowerCase()).then(function(){});
     return {
+      id: r.data.id,
       email: r.data.email, name: r.data.nombre,
       role: r.data.rol.toLowerCase(), cargo: r.data.cargo
     };
@@ -281,6 +282,111 @@ window.DuocAPI = (function () {
     return r.data;
   }
 
+  /* ══════════════════════════════════════════════════════════════
+     7) RESERVAS — cargar reservas de un usuario / crear / cancelar
+     ══════════════════════════════════════════════════════════════ */
+  async function getReservasUsuario(usuarioEmail) {
+    if (!_online) return null;
+    try {
+      var userRes = await _client.from('usuarios').select('id').eq('email', usuarioEmail.toLowerCase()).single();
+      if (userRes.error || !userRes.data) return null;
+      var userId = userRes.data.id;
+
+      var r = await _client.from('reservas')
+        .select('id, motivo, qr_token, fecha_inicio, fecha_fin, estado, espacios(numero, sector)')
+        .eq('creada_por', userId)
+        .in('estado', ['PENDIENTE', 'ACTIVA'])
+        .order('created_at', { ascending: false });
+      
+      if (r.error) { console.warn('getReservasUsuario error', r.error); return null; }
+      
+      // Mapear al formato esperado en el frontend
+      return r.data.map(function(row) {
+        var esp = row.espacios || {};
+        var horaStr = '';
+        try {
+          var dIni = new Date(row.fecha_inicio);
+          var dFin = new Date(row.fecha_fin);
+          var hIni = dIni.getHours().toString().padStart(2, '0') + ':' + dIni.getMinutes().toString().padStart(2, '0');
+          var hFin = dFin.getHours().toString().padStart(2, '0') + ':' + dFin.getMinutes().toString().padStart(2, '0');
+          horaStr = hIni + '–' + hFin;
+        } catch(e) {
+          horaStr = '08:00–12:00';
+        }
+        var fechaStr = '';
+        try {
+          var dIni = new Date(row.fecha_inicio);
+          fechaStr = dIni.getDate().toString().padStart(2,'0') + '-' + (dIni.getMonth()+1).toString().padStart(2,'0') + '-' + dIni.getFullYear();
+        } catch(e) {
+          fechaStr = '05-06-2026';
+        }
+        return {
+          id: row.id,
+          espacio: 'E-' + esp.numero,
+          sector: esp.sector || 'A',
+          fecha: fechaStr,
+          hora: horaStr,
+          estado: row.estado.toLowerCase()
+        };
+      });
+    } catch(e) {
+      console.warn('getReservasUsuario exception', e);
+      return null;
+    }
+  }
+
+  async function crearReserva(usuarioEmail, numeroEspacio, motivo, fecha, horaInicio, horaFin) {
+    if (!_online) return { success: true, offline: true };
+    try {
+      var userRes = await _client.from('usuarios').select('id').eq('email', usuarioEmail.toLowerCase()).single();
+      if (userRes.error || !userRes.data) throw new Error('Usuario no encontrado');
+      var userId = userRes.data.id;
+
+      var espRes = await _client.from('espacios').select('id, estado').eq('numero', numeroEspacio).single();
+      if (espRes.error || !espRes.data) throw new Error('Espacio no encontrado');
+      var espacioId = espRes.data.id;
+
+      if (espRes.data.estado !== 'LIBRE') {
+        throw new Error('El espacio no está disponible');
+      }
+
+      var qrToken = 'E' + numeroEspacio + '-' + Date.now().toString(36).toUpperCase();
+      var fInicio = new Date(fecha + 'T' + horaInicio + ':00');
+      var fFin = new Date(fecha + 'T' + horaFin + ':00');
+
+      var insertRes = await _client.from('reservas').insert({
+        espacio_id: espacioId,
+        creada_por: userId,
+        motivo: motivo || 'Reserva Docente',
+        qr_token: qrToken,
+        fecha_inicio: fInicio.toISOString(),
+        fecha_fin: fFin.toISOString(),
+        estado: 'ACTIVA'
+      }).select();
+
+      if (insertRes.error) throw insertRes.error;
+
+      await cambiarEstadoEspacio(numeroEspacio, 'RESERVADO');
+      return { success: true, data: insertRes.data[0] };
+    } catch (e) {
+      console.warn('crearReserva error:', e.message);
+      return { success: false, error: e.message };
+    }
+  }
+
+  async function cancelarReserva(reservaId, numeroEspacio) {
+    if (!_online) return { success: true, offline: true };
+    try {
+      var r = await _client.from('reservas').update({ estado: 'CANCELADA' }).eq('id', reservaId);
+      if (r.error) throw r.error;
+      await cambiarEstadoEspacio(numeroEspacio, 'LIBRE');
+      return { success: true };
+    } catch(e) {
+      console.warn('cancelarReserva error:', e.message);
+      return { success: false, error: e.message };
+    }
+  }
+
   /* ── EXPORT ───────────────────────────────────────────────────── */
   return {
     init: init, isOnline: isOnline, client: client,
@@ -291,6 +397,7 @@ window.DuocAPI = (function () {
     getHistorico: getHistorico, predecirOcupacion: predecirOcupacion,
     crearSolicitud: crearSolicitud, getSolicitudesPendientes: getSolicitudesPendientes,
     aprobarSolicitud: aprobarSolicitud,
-    login: login, getUsuarios: getUsuarios
+    login: login, getUsuarios: getUsuarios,
+    getReservasUsuario: getReservasUsuario, crearReserva: crearReserva, cancelarReserva: cancelarReserva
   };
 })();
