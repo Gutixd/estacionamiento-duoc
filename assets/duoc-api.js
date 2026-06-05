@@ -78,9 +78,39 @@ window.DuocAPI = (function () {
      ══════════════════════════════════════════════════════════════ */
   async function getEspacios() {
     if (!_online) return null;
-    var r = await _client.from('espacios').select('*').order('numero');
-    if (r.error) { console.warn('getEspacios', r.error); return null; }
-    return r.data;
+    try {
+      var r = await _client.from('espacios')
+        .select(`
+          numero,
+          sector,
+          estado,
+          conductor_asignado:conductor_asignado_id (
+            rut,
+            tipo_acceso,
+            usuarios:usuario_id (nombre, email)
+          ),
+          vehiculo_actual:vehiculo_actual_id (patente, marca, modelo)
+        `)
+        .order('numero');
+      
+      if (r.error) throw r.error;
+
+      return r.data.map(function(row) {
+        var cond = row.conductor_asignado || {};
+        var user = cond.usuarios || {};
+        var veh  = row.vehiculo_actual || {};
+        return {
+          numero: row.numero,
+          sector: row.sector,
+          estado: row.estado,
+          conductor: user.nombre || null,
+          patente: veh.patente || null
+        };
+      });
+    } catch(e) {
+      console.warn('getEspacios error', e);
+      return null;
+    }
   }
 
   async function getEstadisticas() {
@@ -92,10 +122,15 @@ window.DuocAPI = (function () {
 
   async function cambiarEstadoEspacio(numero, estado) {
     if (!_online) return null;
-    // estado debe ser LIBRE | OCUPADO | RESERVADO | BLOQUEADO
+    var estadoUpper = estado.toUpperCase();
+    if (estadoUpper === 'LIBRE' || estadoUpper === 'BLOQUEADO') {
+      await _client.from('espacios')
+        .update({ conductor_asignado_id: null, vehiculo_actual_id: null })
+        .eq('numero', numero);
+    }
     var r = await _client.rpc('cambiar_estado_espacio', {
       p_numero: numero,
-      p_estado: estado.toUpperCase()
+      p_estado: estadoUpper
     });
     if (r.error) { console.warn('cambiarEstado', r.error); return null; }
     return r.data;
@@ -335,12 +370,90 @@ window.DuocAPI = (function () {
     }
   }
 
-  async function crearReserva(usuarioEmail, numeroEspacio, motivo, fecha, horaInicio, horaFin) {
+  async function getConductorYVehiculoPorEmail(email, patenteInput) {
+    if (!_online) return null;
+    try {
+      var userRes = await _client.from('usuarios').select('id, nombre').eq('email', email.toLowerCase()).single();
+      if (userRes.error || !userRes.data) return null;
+      var userId = userRes.data.id;
+
+      var condRes = await _client.from('conductores').select('id').eq('usuario_id', userId).single();
+      if (condRes.error || !condRes.data) return null;
+      var conductorId = condRes.data.id;
+
+      var vehId = null;
+      if (patenteInput) {
+        var patenteLimpia = patenteInput.toUpperCase().replace(/\s|-/g, '');
+        var vehRes = await _client.from('vehiculos').select('id').eq('patente', patenteLimpia).single();
+        if (!vehRes.error && vehRes.data) {
+          vehId = vehRes.data.id;
+        } else {
+          var insertVeh = await _client.from('vehiculos').insert({
+            conductor_id: conductorId,
+            patente: patenteLimpia,
+            marca: 'Toyota',
+            modelo: 'Yaris',
+            color: 'Gris',
+            anio: 2020,
+            activo: true
+          }).select();
+          if (!insertVeh.error && insertVeh.data && insertVeh.data.length > 0) {
+            vehId = insertVeh.data[0].id;
+          }
+        }
+      }
+      return { userId: userId, conductorId: conductorId, vehiculoId: vehId, nombreConductor: userRes.data.nombre };
+    } catch(e) {
+      console.warn('getConductorYVehiculoPorEmail error', e);
+      return null;
+    }
+  }
+
+  async function getEspacioDetalle(numeroSpace) {
+    if (!_online) return null;
+    try {
+      var r = await _client.from('espacios')
+        .select(`
+          numero,
+          sector,
+          estado,
+          conductor_asignado:conductor_asignado_id (
+            rut,
+            tipo_acceso,
+            usuarios:usuario_id (nombre, email)
+          ),
+          vehiculo_actual:vehiculo_actual_id (patente, marca, modelo)
+        `)
+        .eq('numero', numeroSpace)
+        .single();
+      
+      if (r.error || !r.data) return null;
+      
+      var cond = r.data.conductor_asignado || {};
+      var user = cond.usuarios || {};
+      var veh  = r.data.vehiculo_actual || {};
+      
+      return {
+        numero: r.data.numero,
+        sector: r.data.sector,
+        estado: r.data.estado,
+        conductor: user.nombre || null,
+        patente: veh.patente || null
+      };
+    } catch(e) {
+      console.warn('getEspacioDetalle error', e);
+      return null;
+    }
+  }
+
+  async function crearReserva(usuarioEmail, numeroEspacio, motivo, fecha, horaInicio, horaFin, patente) {
     if (!_online) return { success: true, offline: true };
     try {
-      var userRes = await _client.from('usuarios').select('id').eq('email', usuarioEmail.toLowerCase()).single();
-      if (userRes.error || !userRes.data) throw new Error('Usuario no encontrado');
-      var userId = userRes.data.id;
+      var info = await getConductorYVehiculoPorEmail(usuarioEmail, patente);
+      if (!info) throw new Error('No se pudo encontrar el conductor asociado');
+      var userId = info.userId;
+      var conductorId = info.conductorId;
+      var vehiculoId = info.vehiculoId;
 
       var espRes = await _client.from('espacios').select('id, estado').eq('numero', numeroEspacio).single();
       if (espRes.error || !espRes.data) throw new Error('Espacio no encontrado');
@@ -366,7 +479,16 @@ window.DuocAPI = (function () {
 
       if (insertRes.error) throw insertRes.error;
 
-      await cambiarEstadoEspacio(numeroEspacio, 'RESERVADO');
+      var updateEsp = await _client.from('espacios')
+        .update({
+          estado: 'RESERVADO',
+          conductor_asignado_id: conductorId,
+          vehiculo_actual_id: vehiculoId
+        })
+        .eq('numero', numeroEspacio);
+      
+      if (updateEsp.error) throw updateEsp.error;
+
       return { success: true, data: insertRes.data[0] };
     } catch (e) {
       console.warn('crearReserva error:', e.message);
@@ -379,7 +501,16 @@ window.DuocAPI = (function () {
     try {
       var r = await _client.from('reservas').update({ estado: 'CANCELADA' }).eq('id', reservaId);
       if (r.error) throw r.error;
-      await cambiarEstadoEspacio(numeroEspacio, 'LIBRE');
+      
+      var updateEsp = await _client.from('espacios')
+        .update({
+          estado: 'LIBRE',
+          conductor_asignado_id: null,
+          vehiculo_actual_id: null
+        })
+        .eq('numero', numeroEspacio);
+      
+      if (updateEsp.error) throw updateEsp.error;
       return { success: true };
     } catch(e) {
       console.warn('cancelarReserva error:', e.message);
@@ -398,6 +529,7 @@ window.DuocAPI = (function () {
     crearSolicitud: crearSolicitud, getSolicitudesPendientes: getSolicitudesPendientes,
     aprobarSolicitud: aprobarSolicitud,
     login: login, getUsuarios: getUsuarios,
-    getReservasUsuario: getReservasUsuario, crearReserva: crearReserva, cancelarReserva: cancelarReserva
+    getReservasUsuario: getReservasUsuario, crearReserva: crearReserva, cancelarReserva: cancelarReserva,
+    getEspacioDetalle: getEspacioDetalle
   };
 })();

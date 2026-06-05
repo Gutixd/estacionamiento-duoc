@@ -801,16 +801,42 @@
   var PLATES = ['BBCD45','GHJK12','RTYU89','WQER34','LMNO56','PQRS78','TUVW90','ABCD23','EFGH56','IJKL78'];
 
   (function initSpaces() {
-    for (var i = 1; i <= 110; i++) {
-      var sector = i <= 30 ? 'A' : i <= 60 ? 'B' : i <= 90 ? 'C' : 'D';
-      var estado = 'libre';
-      var conductor = null, patente = null;
-      if (BLOCKED.indexOf(i)  !== -1) { estado = 'bloqueado'; }
-      else if (RESERVED.indexOf(i) !== -1) { estado = 'reservado'; conductor = NAMES[i%10]; patente = PLATES[i%10]; }
-      else if (OCCUPIED.indexOf(i) !== -1) { estado = 'ocupado'; conductor = NAMES[i%10]; patente = PLATES[i%10]; }
-      SPACES[i] = { id: i, sector: sector, estado: estado, conductor: conductor, patente: patente };
+    var localSpaces = null;
+    try { localSpaces = JSON.parse(localStorage.getItem('duoc_offline_spaces')); } catch(e) {}
+    if (localSpaces && Object.keys(localSpaces).length > 0) {
+      SPACES = localSpaces;
+    } else {
+      for (var i = 1; i <= 110; i++) {
+        var sector = i <= 30 ? 'A' : i <= 60 ? 'B' : i <= 90 ? 'C' : 'D';
+        var estado = 'libre';
+        var conductor = null, patente = null;
+        if (BLOCKED.indexOf(i)  !== -1) { estado = 'bloqueado'; }
+        else if (RESERVED.indexOf(i) !== -1) { estado = 'reservado'; conductor = NAMES[i%10]; patente = PLATES[i%10]; }
+        else if (OCCUPIED.indexOf(i) !== -1) { estado = 'ocupado'; conductor = NAMES[i%10]; patente = PLATES[i%10]; }
+        SPACES[i] = { id: i, sector: sector, estado: estado, conductor: conductor, patente: patente };
+      }
+      localStorage.setItem('duoc_offline_spaces', JSON.stringify(SPACES));
     }
   })();
+
+  // Sincronización offline en tiempo real por localStorage (para pestañas lado a lado)
+  window.addEventListener('storage', function(e) {
+    if (e.key === 'duoc_offline_spaces') {
+      try {
+        var loaded = JSON.parse(e.newValue);
+        if (loaded) {
+          SPACES = loaded;
+          updateKPIs();
+          buildDesktopMap();
+          if (donutChartInst) {
+            var st = countStats();
+            donutChartInst.data.datasets[0].data = [st.libre, st.ocup, st.res, st.bloq];
+            donutChartInst.update('none');
+          }
+        }
+      } catch(ex) {}
+    }
+  });
 
   function countStats() {
     var libre=0,ocup=0,res=0,bloq=0;
@@ -1397,7 +1423,7 @@
     }
 
     if (ONLINE) {
-      window.DuocAPI.crearReserva(auth.email, num, motivo, fecha, horaInicio, horaFin).then(function(res) {
+      window.DuocAPI.crearReserva(auth.email, num, motivo, fecha, horaInicio, horaFin, patente).then(function(res) {
         if (res && res.success) {
           showToast('✅ Reserva del espacio E-' + num + ' creada con éxito');
           if (SPACES[num]) {
@@ -1436,6 +1462,7 @@
         SPACES[num].conductor = auth.name;
         SPACES[num].patente = patente;
       }
+      localStorage.setItem('duoc_offline_spaces', JSON.stringify(SPACES));
       showToast('✅ Reserva del espacio E-' + num + ' creada con éxito');
       closeReservaModal();
       loadReservationsCache(function() {
@@ -1486,6 +1513,7 @@
           SPACES[numeroEspacio].conductor = null;
           SPACES[numeroEspacio].patente = null;
         }
+        localStorage.setItem('duoc_offline_spaces', JSON.stringify(SPACES));
         showToast('✅ Reserva del espacio E-' + numeroEspacio + ' cancelada con éxito');
         loadReservationsCache(function() {
           renderReservas();

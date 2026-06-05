@@ -960,30 +960,59 @@
   var regCount = 0;
 
   function initSpaces() {
-    for (var i = 1; i <= 110; i++) {
-      var sector = i <= 30 ? 'A' : i <= 60 ? 'B' : i <= 90 ? 'C' : 'D';
-      var estado = 'libre';
-      var conductor = null;
-      var patente   = null;
-      var hora      = null;
-
-      if (BLOCKED_IDS.indexOf(i) !== -1) {
-        estado = 'bloqueado';
-      } else if (RESERVED_IDS.indexOf(i) !== -1) {
-        estado = 'reservado';
-        var rc = CONDUCTORES[Math.floor(Math.random() * CONDUCTORES.length)];
-        conductor = rc.nombre; patente = rc.patente;
-      } else if (OCCUPIED_IDS.indexOf(i) !== -1) {
-        estado = 'ocupado';
-        var oc = CONDUCTORES[Math.floor(Math.random() * CONDUCTORES.length)];
-        conductor = oc.nombre; patente = oc.patente;
-        var h = new Date(Date.now() - Math.random() * 3600000 * 4);
-        hora = h.getHours().toString().padStart(2,'0') + ':' + h.getMinutes().toString().padStart(2,'0');
-        regCount++;
+    var localSpaces = null;
+    try { localSpaces = JSON.parse(localStorage.getItem('duoc_offline_spaces')); } catch(e) {}
+    if (localSpaces && Object.keys(localSpaces).length > 0) {
+      spaces = localSpaces;
+      regCount = 0;
+      for (var k in spaces) {
+        if (spaces[k].estado === 'ocupado') regCount++;
       }
-      spaces[i] = { id: i, sector: sector, estado: estado, conductor: conductor, patente: patente, hora: hora };
+    } else {
+      for (var i = 1; i <= 110; i++) {
+        var sector = i <= 30 ? 'A' : i <= 60 ? 'B' : i <= 90 ? 'C' : 'D';
+        var estado = 'libre';
+        var conductor = null;
+        var patente   = null;
+        var hora      = null;
+
+        if (BLOCKED_IDS.indexOf(i) !== -1) {
+          estado = 'bloqueado';
+        } else if (RESERVED_IDS.indexOf(i) !== -1) {
+          estado = 'reservado';
+          var rc = CONDUCTORES[Math.floor(Math.random() * CONDUCTORES.length)];
+          conductor = rc.nombre; patente = rc.patente;
+        } else if (OCCUPIED_IDS.indexOf(i) !== -1) {
+          estado = 'ocupado';
+          var oc = CONDUCTORES[Math.floor(Math.random() * CONDUCTORES.length)];
+          conductor = oc.nombre; patente = oc.patente;
+          var h = new Date(Date.now() - Math.random() * 3600000 * 4);
+          hora = h.getHours().toString().padStart(2,'0') + ':' + h.getMinutes().toString().padStart(2,'0');
+          regCount++;
+        }
+        spaces[i] = { id: i, sector: sector, estado: estado, conductor: conductor, patente: patente, hora: hora };
+      }
+      localStorage.setItem('duoc_offline_spaces', JSON.stringify(spaces));
     }
   }
+
+  // Sincronización offline en tiempo real por localStorage (para pestañas lado a lado)
+  window.addEventListener('storage', function(e) {
+    if (e.key === 'duoc_offline_spaces') {
+      try {
+        var loaded = JSON.parse(e.newValue);
+        if (loaded) {
+          spaces = loaded;
+          regCount = 0;
+          for (var k in spaces) {
+            if (spaces[k].estado === 'ocupado') regCount++;
+            updateSpaceEl(k);
+          }
+          updateStats(false);
+        }
+      } catch(ex) {}
+    }
+  });
 
   /* ── STATS ─────────────────────────────────────── */
   function countStats() {
@@ -1214,6 +1243,8 @@
     // Persistir en Supabase (Realtime notifica a otros clientes)
     if (ONLINE) {
       window.DuocAPI.cambiarEstadoEspacio(id, newState).catch(function(){});
+    } else {
+      localStorage.setItem('duoc_offline_spaces', JSON.stringify(spaces));
     }
   }
 
@@ -1448,15 +1479,38 @@
       var id = nuevo.numero;
       if (!spaces[id]) return;
       var estadoLower = nuevo.estado.toLowerCase();
-      if (spaces[id].estado === estadoLower) return;
-      spaces[id].estado = estadoLower;
-      updateSpaceEl(id);
-      var el = document.getElementById('sp-' + id);
-      if (el) {
-        el.classList.add(estadoLower === 'libre' ? 'flash-green' : 'flash-red');
-        setTimeout(function(){ el.classList.remove('flash-green','flash-red'); }, 500);
+      
+      if (estadoLower === 'libre') {
+        spaces[id].estado = 'libre';
+        spaces[id].conductor = null;
+        spaces[id].patente = null;
+        spaces[id].hora = null;
+        updateSpaceEl(id);
+        updateStats(false);
+        return;
       }
-      updateStats(false);
+      
+      window.DuocAPI.getEspacioDetalle(id).then(function(detalle) {
+        if (detalle) {
+          spaces[id].estado = detalle.estado.toLowerCase();
+          spaces[id].conductor = detalle.conductor;
+          spaces[id].patente = detalle.patente;
+          spaces[id].hora = new Date().toTimeString().slice(0,5);
+        } else {
+          spaces[id].spaces = estadoLower;
+        }
+        updateSpaceEl(id);
+        var el = document.getElementById('sp-' + id);
+        if (el) {
+          el.classList.add(estadoLower === 'libre' ? 'flash-green' : 'flash-red');
+          setTimeout(function(){ el.classList.remove('flash-green','flash-red'); }, 500);
+        }
+        updateStats(false);
+      }).catch(function() {
+        spaces[id].estado = estadoLower;
+        updateSpaceEl(id);
+        updateStats(false);
+      });
     });
   }
 
