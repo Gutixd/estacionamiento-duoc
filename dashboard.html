@@ -603,17 +603,44 @@
 
       <!-- ── MAPA VIEW ── -->
       <div class="view" id="view-mapa">
-        <!-- Mapa Real del Estacionamiento -->
-        <div style="padding: 20px;">
-          <h3 style="margin-bottom: 16px; font-weight: 800;">Plano del Estacionamiento Duoc UC Maipú</h3>
-          <div style="background: #fff; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-lg);">
+        <!-- Plano real (referencia) -->
+        <div style="margin-bottom: 20px;">
+          <h3 style="margin-bottom: 12px; font-weight: 800;">Plano del Estacionamiento Duoc UC Maipú</h3>
+          <div style="background: #fff; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow);">
             <img src="./mapa estacionamiento.png" alt="Mapa Estacionamiento" style="width: 100%; height: auto; display: block;">
           </div>
-          <div style="margin-top: 16px; padding: 16px; background: #f8fafc; border-radius: 12px; border-left: 3px solid var(--blue);">
-            <p style="margin: 0; font-size: 13px; color: var(--text);">
-              <strong>✓ 110 espacios totales</strong> distribuidos en 4 sectores (A, B, C, D) con circulación de doble mano.<br>
-              Los espacios se actualizan en tiempo real en la vista de Inicio.
-            </p>
+        </div>
+
+        <!-- Mapa interactivo en tiempo real -->
+        <h3 style="margin-bottom: 12px; font-weight: 800;">Estado en Tiempo Real</h3>
+        <div class="map-header-desktop">
+          <div class="map-stats-mini">
+            <div class="stat-chip-mini" style="border-left: 3px solid var(--libre)">
+              <span style="color:var(--libre)">🟢</span>&nbsp;<strong id="m-stat-libre">0</strong>&nbsp;Libres
+            </div>
+            <div class="stat-chip-mini" style="border-left: 3px solid var(--ocupado)">
+              <span style="color:var(--ocupado)">🔴</span>&nbsp;<strong id="m-stat-ocup">0</strong>&nbsp;Ocupados
+            </div>
+            <div class="stat-chip-mini" style="border-left: 3px solid var(--res)">
+              <span style="color:var(--res)">🟡</span>&nbsp;<strong id="m-stat-res">0</strong>&nbsp;Reservados
+            </div>
+            <div class="stat-chip-mini" style="border-left: 3px solid var(--bloq)">
+              <span style="color:var(--bloq)">⚫</span>&nbsp;<strong id="m-stat-bloq">0</strong>&nbsp;Bloqueados
+            </div>
+          </div>
+          <div class="filter-btn-group">
+            <button class="filter-btn active" onclick="filterMapSector('ALL', this)">Todos</button>
+            <button class="filter-btn" onclick="filterMapSector('A', this)">Sector A</button>
+            <button class="filter-btn" onclick="filterMapSector('B', this)">Sector B</button>
+            <button class="filter-btn" onclick="filterMapSector('C', this)">Sector C</button>
+            <button class="filter-btn" onclick="filterMapSector('D', this)">Sector D</button>
+          </div>
+        </div>
+
+        <!-- Lot Grid -->
+        <div class="lot-desktop">
+          <div class="lot-grid-sectors" id="lotGridSectors">
+            <!-- Sectores se generan dinámicamente -->
           </div>
         </div>
       </div>
