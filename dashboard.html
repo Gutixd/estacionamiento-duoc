@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard · Duoc UC Maipú</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:      #0a0f1e;
+      --bg2:     #111827;
+      --bg3:     #1a2236;
+      --bg4:     #0d1526;
+      --blue:    #003087;
+      --accent:  #4f8ef7;
+      --libre:   #22c55e;
+      --ocupado: #ef4444;
+      --res:     #f59e0b;
+      --bloq:    #6b7280;
+      --text:    #f1f5f9;
+      --text2:   #94a3b8;
+      --text3:   #475569;
+      --border:  rgba(255,255,255,0.07);
+      --sidebar: 230px;
+      --header:  60px;
+    }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: "Inter", -apple-system, sans-serif; -webkit-font-smoothing: antialiased; overflow: hidden; }
+
+    /* ── LAYOUT ── */
+    #app { display: flex; height: 100svh; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: var(--sidebar);
+      background: var(--bg4);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      flex-shrink: 0;
+      transition: width .3s;
+      z-index: 20;
+    }
+
+    .sidebar-logo {
+      height: var(--header);
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .sb-logo-img {
+      width: 34px; height: 34px;
+      background: rgba(255,255,255,0.95);
+      border-radius: 8px; padding: 4px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; overflow: hidden;
+    }
+    .sb-logo-img img { width: 100%; object-fit: contain; }
+    .sb-logo-text strong { font-size: 13px; font-weight: 800; display: block; }
+    .sb-logo-text span   { font-size: 10px; color: var(--text2); }
+
+    .sidebar-nav { flex: 1; padding: 12px 8px; overflow-y: auto; }
+    .nav-section-label { font-size: 9px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .1em; padding: 8px 10px 4px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 10px;
+      cursor: pointer; font-size: 13px; font-weight: 500;
+      color: var(--text2); margin-bottom: 2px;
+      transition: all .18s; border: none; background: none;
+      width: 100%; font-family: inherit; text-align: left;
+    }
+    .nav-item:hover  { background: rgba(255,255,255,0.05); color: var(--text); }
+    .nav-item.active { background: rgba(79,142,247,0.15); color: var(--accent); }
+    .nav-item.active .ni-ico { color: var(--accent); }
+    .ni-ico { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+    .ni-badge {
+      margin-left: auto; background: var(--ocupado);
+      color: #fff; font-size: 9px; font-weight: 700;
+      padding: 2px 6px; border-radius: 20px; min-width: 18px; text-align: center;
+    }
+
+    .sidebar-footer {
+      padding: 12px 8px;
+      border-top: 1px solid var(--border);
+    }
+    .user-card {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px; border-radius: 10px;
+      background: rgba(255,255,255,0.04);
+    }
+    .user-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--blue); display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; flex-shrink: 0; overflow: hidden;
+    }
+    .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .user-info strong { font-size: 12px; font-weight: 700; display: block; }
+    .user-info span   { font-size: 10px; color: var(--text2); }
+    .logout-btn {
+      margin-left: auto; background: none; border: none;
+      color: var(--text3); font-size: 16px; cursor: pointer;
+      padding: 4px; border-radius: 6px; transition: color .15s;
+    }
+    .logout-btn:hover { color: var(--ocupado); }
+
+    /* ── MAIN ── */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* ── HEADER ── */
+    .header {
+      height: var(--header);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .page-title { font-size: 16px; font-weight: 800; }
+    .breadcrumb { font-size: 12px; color: var(--text2); }
+
+    .header-right { display: flex; align-items: center; gap: 12px; }
+
+    .live-badge {
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(34,197,94,0.12);
+      border: 1px solid rgba(34,197,94,0.25);
+      border-radius: 20px; padding: 4px 10px;
+      font-size: 11px; font-weight: 700; color: var(--libre);
+    }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--libre); animation: pulse 1.6s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(1.3)} }
+
+    .clock { font-size: 13px; font-weight: 600; color: var(--text2); font-variant-numeric: tabular-nums; }
+
+    /* ── SCROLL AREA ── */
+    .content { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 20px 24px; scrollbar-width: thin; scrollbar-color: var(--bg3) transparent; }
+    .content::-webkit-scrollbar { width: 5px; }
+    .content::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 3px; }
+
+    /* ── VIEWS ── */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* ── KPI CARDS ── */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    .kpi-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 16px; padding: 18px 20px;
+      position: relative; overflow: hidden;
+      animation: cardIn .4s ease both;
+    }
+    @keyframes cardIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+    .kpi-card:nth-child(1){ animation-delay:.05s; border-left: 3px solid var(--libre); }
+    .kpi-card:nth-child(2){ animation-delay:.1s;  border-left: 3px solid var(--ocupado); }
+    .kpi-card:nth-child(3){ animation-delay:.15s; border-left: 3px solid var(--res); }
+    .kpi-card:nth-child(4){ animation-delay:.2s;  border-left: 3px solid var(--accent); }
+
+    .kpi-label { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+    .kpi-num   { font-size: 32px; font-weight: 900; line-height: 1; margin-bottom: 4px; }
+    .kpi-sub   { font-size: 11px; color: var(--text2); }
+    .kpi-ico   { position: absolute; right: 16px; top: 16px; font-size: 22px; opacity: 0.3; }
+    .kpi-card:nth-child(1) .kpi-num { color: var(--libre); }
+    .kpi-card:nth-child(2) .kpi-num { color: var(--ocupado); }
+    .kpi-card:nth-child(3) .kpi-num { color: var(--res); }
+    .kpi-card:nth-child(4) .kpi-num { color: var(--accent); }
+
+    /* ── CHARTS GRID ── */
+    .charts-row { display: grid; grid-template-columns: 1fr 2fr; gap: 12px; margin-bottom: 20px; }
+    .charts-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+
+    .chart-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 16px; padding: 20px;
+      animation: cardIn .4s ease both;
+    }
+    .chart-card:nth-child(2){ animation-delay:.1s; }
+
+    .chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .chart-title  { font-size: 14px; font-weight: 700; }
+    .chart-sub    { font-size: 11px; color: var(--text2); }
+    .chart-badge  { font-size: 10px; background: rgba(79,142,247,0.12); color: var(--accent); border: 1px solid rgba(79,142,247,.2); border-radius: 20px; padding: 2px 8px; font-weight: 600; }
+
+    canvas { display: block; }
+
+    /* ── MAP ── */
+    #mapContainer {
+      height: 260px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .leaflet-container { background: #0d1526 !important; }
+
+    /* ── TABLE ── */
+    .table-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .table-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .table-header h3 { font-size: 15px; font-weight: 700; }
+    .table-actions { display: flex; gap: 8px; }
+    .btn-sm {
+      padding: 7px 14px; border-radius: 8px; border: none;
+      font-size: 12px; font-weight: 600; font-family: inherit;
+      cursor: pointer; transition: opacity .15s;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-outline { background: rgba(255,255,255,0.05); color: var(--text2); border: 1px solid var(--border); }
+
+    table { width: 100%; border-collapse: collapse; }
+    th { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; padding: 10px 20px; background: rgba(0,0,0,0.15); text-align: left; }
+    td { padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 13px; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.025); }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 8px; border-radius: 20px; font-size: 10px; font-weight: 700;
+    }
+    .badge.guardia     { background: rgba(79,142,247,.15);  color: var(--accent); }
+    .badge.profesor    { background: rgba(245,158,11,.15);  color: var(--res); }
+    .badge.coordinacion{ background: rgba(34,197,94,.15);   color: var(--libre); }
+    .badge.pending     { background: rgba(239,68,68,.15);   color: var(--ocupado); }
+    .badge.active      { background: rgba(34,197,94,.12);   color: var(--libre); }
+    .badge.inactive    { background: rgba(75,85,99,.2);     color: var(--bloq); }
+
+    .action-btn {
+      padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border);
+      background: none; color: var(--text2); font-size: 11px; font-weight: 600;
+      cursor: pointer; font-family: inherit; margin-right: 4px;
+      transition: all .15s;
+    }
+    .action-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .action-btn.approve { border-color: rgba(34,197,94,.3); color: var(--libre); }
+    .action-btn.approve:hover { background: rgba(34,197,94,.1); }
+
+    /* ── APPROVAL SECTION ── */
+    .approval-card {
+      background: rgba(239,68,68,.06);
+      border: 1px solid rgba(239,68,68,.2);
+      border-radius: 16px; padding: 16px 20px; margin-bottom: 20px;
+    }
+    .approval-title { font-size: 14px; font-weight: 700; color: var(--ocupado); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .approval-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid rgba(239,68,68,.1);
+      font-size: 13px;
+    }
+    .approval-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .ai-info strong { display: block; font-weight: 700; }
+    .ai-info span   { font-size: 11px; color: var(--text2); }
+    .ai-actions { display: flex; gap: 6px; }
+    .approve-btn { background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.3); color: var(--libre); border-radius: 8px; padding: 6px 12px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .reject-btn  { background: rgba(239,68,68,.1);  border: 1px solid rgba(239,68,68,.25); color: var(--ocupado); border-radius: 8px; padding: 6px 12px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit; }
+
+    /* ── PROFILE VIEW ── */
+    .profile-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+    .profile-hero {
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 16px; padding: 28px 20px; text-align: center;
+    }
+    .ph-avatar { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--accent); overflow: hidden; margin: 0 auto 12px; }
+    .ph-avatar img { width:100%; height:100%; object-fit:cover; }
+    .ph-name  { font-size: 18px; font-weight: 800; }
+    .ph-cargo { font-size: 12px; color: var(--accent); margin-top: 4px; }
+    .ph-email { font-size: 12px; color: var(--text2); margin-top: 4px; }
+
+    .profile-detail {
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 16px; padding: 20px;
+    }
+    .pd-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .pd-row:last-child { border-bottom: none; }
+    .pd-label { font-size: 12px; color: var(--text2); }
+    .pd-value { font-size: 13px; font-weight: 600; }
+
+    /* ── TOAST ── */
+    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 12px 18px; font-size: 13px; font-weight: 600; z-index: 200; opacity:0; transform:translateY(8px); transition: all .25s; pointer-events:none; }
+    .toast.show { opacity:1; transform:translateY(0); }
+
+    /* MOBILE RESPONSIVE */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+      .charts-row { grid-template-columns: 1fr; }
+      .charts-row2 { grid-template-columns: 1fr; }
+      .profile-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sb-logo-img">
+        <img src="./logo duocuc..png" alt="Duoc" onerror="this.parentElement.innerHTML='🅿️'">
+      </div>
+      <div class="sb-logo-text">
+        <strong>Duoc UC Maipú</strong>
+        <span id="sbRole">–</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav" id="sidebarNav">
+      <!-- filled by JS -->
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" id="sbAvatar"></div>
+        <div class="user-info">
+          <strong id="sbName">–</strong>
+          <span id="sbEmail">–</span>
+        </div>
+        <button class="logout-btn" onclick="logout()" title="Cerrar sesión">⬅</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-left">
+        <div>
+          <div class="page-title" id="pageTitle">Dashboard</div>
+          <div class="breadcrumb" id="pageBreadcrumb">Inicio → Dashboard</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="live-badge"><span class="live-dot"></span>EN VIVO</div>
+        <div class="clock" id="clock">--:--:--</div>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- ── INICIO VIEW ── -->
+      <div class="view active" id="view-inicio">
+        <!-- KPIs -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">Libres</div>
+            <div class="kpi-num kpi-libre" id="k-libre">0</div>
+            <div class="kpi-sub">de 110 espacios</div>
+            <div class="kpi-ico">🟢</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Ocupados</div>
+            <div class="kpi-num" id="k-ocup">0</div>
+            <div class="kpi-sub" id="k-pct">0% ocupación</div>
+            <div class="kpi-ico">🚗</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Reservados</div>
+            <div class="kpi-num" id="k-res">0</div>
+            <div class="kpi-sub">activos ahora</div>
+            <div class="kpi-ico">📋</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Ocupación pico</div>
+            <div class="kpi-num" id="k-peak">78%</div>
+            <div class="kpi-sub">hoy a las 10:00</div>
+            <div class="kpi-ico">📈</div>
+          </div>
+        </div>
+
+        <!-- CHARTS ROW 1 -->
+        <div class="charts-row">
+          <div class="chart-card">
+            <div class="chart-header">
+              <div>
+                <div class="chart-title">Ocupación actual</div>
+                <div class="chart-sub">Estado en tiempo real</div>
+              </div>
+              <div class="chart-badge">LIVE</div>
+            </div>
+            <canvas id="donutChart" height="200"></canvas>
+            <div id="donutLegend" style="margin-top:12px;display:flex;flex-direction:column;gap:6px;"></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-header">
+              <div>
+                <div class="chart-title">Ocupación últimas 24 horas</div>
+                <div class="chart-sub">Tendencia del día</div>
+              </div>
+              <div class="chart-badge" id="lineDate"></div>
+            </div>
+            <canvas id="lineChart" height="200"></canvas>
+          </div>
+        </div>
+
+        <!-- CHARTS ROW 2 -->
+        <div class="charts-row2">
+          <div class="chart-card">
+            <div class="chart-header">
+              <div>
+                <div class="chart-title">Mapa del campus</div>
+                <div class="chart-sub">Duoc UC Maipú · Av. Santa Julia 1759</div>
+              </div>
+            </div>
+            <div id="mapContainer"></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-header">
+              <div>
+                <div class="chart-title">Espacios por sector</div>
+                <div class="chart-sub">Distribución A · B · C · D</div>
+              </div>
+            </div>
+            <canvas id="barChart" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── MAPA VIEW ── -->
+      <div class="view" id="view-mapa">
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:20px">
+          <h3 style="margin-bottom:12px;font-size:15px;">🗺️ Mapa de espacios — ver guardia.html</h3>
+          <p style="color:var(--text2);font-size:13px;line-height:1.6">El mapa interactivo de 110 espacios está en la app del guardia (diseñada para móvil). <br>Puedes abrirla desde aquí:</p>
+          <a href="./guardia.html" style="display:inline-block;margin-top:14px;padding:12px 20px;background:var(--accent);color:#fff;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;">Abrir App Guardia →</a>
+        </div>
+      </div>
+
+      <!-- ── RESERVAS VIEW ── -->
+      <div class="view" id="view-reservas">
+        <div class="table-card">
+          <div class="table-header">
+            <h3>📋 Mis reservas activas</h3>
+            <div class="table-actions">
+              <button class="btn-sm btn-primary" onclick="showToast('Funcionalidad próximamente')">+ Nueva reserva</button>
+            </div>
+          </div>
+          <table>
+            <thead><tr><th>Espacio</th><th>Sector</th><th>Fecha</th><th>Hora</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="reservasBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── USUARIOS VIEW (coordinación) ── -->
+      <div class="view" id="view-usuarios">
+        <!-- PENDING APPROVALS -->
+        <div class="approval-card" id="pendingSection">
+          <div class="approval-title">🔴 Solicitudes pendientes de aprobación</div>
+          <div id="pendingList"></div>
+        </div>
+        <!-- USERS TABLE -->
+        <div class="table-card">
+          <div class="table-header">
+            <h3>👥 Usuarios del sistema</h3>
+            <div class="table-actions">
+              <button class="btn-sm btn-outline" onclick="showToast('Exportando lista...')">📥 Exportar</button>
+            </div>
+          </div>
+          <table>
+            <thead><tr><th>Usuario</th><th>Correo</th><th>Rol</th><th>Estado</th><th>Último acceso</th><th>Acciones</th></tr></thead>
+            <tbody id="usersBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── PERFIL VIEW ── -->
+      <div class="view" id="view-perfil">
+        <div class="profile-grid">
+          <div class="profile-hero">
+            <div class="ph-avatar"><img id="phAvatar" src="" alt=""></div>
+            <div class="ph-name"  id="phName">–</div>
+            <div class="ph-cargo" id="phCargo">–</div>
+            <div class="ph-email" id="phEmail">–</div>
+            <div style="margin-top:16px">
+              <span class="badge active">✓ Sesión activa</span>
+            </div>
+          </div>
+          <div class="profile-detail">
+            <div class="pd-row"><span class="pd-label">Nombre completo</span><span class="pd-value" id="pdName">–</span></div>
+            <div class="pd-row"><span class="pd-label">Correo</span><span class="pd-value" id="pdEmail">–</span></div>
+            <div class="pd-row"><span class="pd-label">Rol en sistema</span><span class="pd-value" id="pdRole">–</span></div>
+            <div class="pd-row"><span class="pd-label">Cargo</span><span class="pd-value" id="pdCargo">–</span></div>
+            <div class="pd-row"><span class="pd-label">Sede</span><span class="pd-value">Duoc UC Maipú</span></div>
+            <div class="pd-row"><span class="pd-label">Sesión iniciada</span><span class="pd-value" id="pdLogin">–</span></div>
+            <div style="margin-top:16px;display:flex;gap:8px;">
+              <button class="btn-sm btn-outline" onclick="showToast('Contraseña enviada al correo ✓')">Cambiar contraseña</button>
+              <button class="btn-sm btn-primary" onclick="logout()">Cerrar sesión</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<div class="toast" id="toast"></div>
+
+<!-- JS LIBS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+<script>
+(function() {
+  "use strict";
+
+  /* ── AUTH CHECK ─────────────────────────────────── */
+  var auth = null;
+  try { auth = JSON.parse(localStorage.getItem('duoc_auth')); } catch(e) {}
+  if (!auth || !auth.role) { window.location.href = './index.html'; return; }
+
+  /* ── MOCK DATA ──────────────────────────────────── */
+  var SPACES = {};
+  var OCCUPIED = [2,5,7,12,15,18,22,27,30,31,35,38,42,45,48,51,55,58,60,62,65,68,72,78,81,82,85,88,91,95,99,102,105,108,3,17,23,41,52,63,77,89,93,106];
+  var RESERVED = [10,25,50,75,100];
+  var BLOCKED  = [33,66,90];
+  var NAMES = ['Carlos Rojas','Ana Sepúlveda','Jorge Martínez','María González','Pedro Fuentes','Luisa Vargas','Diego Castillo','Carmen Flores','Marcos Herrera','Valentina Soto'];
+  var PLATES = ['BBCD45','GHJK12','RTYU89','WQER34','LMNO56','PQRS78','TUVW90','ABCD23','EFGH56','IJKL78'];
+
+  (function initSpaces() {
+    for (var i = 1; i <= 110; i++) {
+      var sector = i <= 30 ? 'A' : i <= 60 ? 'B' : i <= 90 ? 'C' : 'D';
+      var estado = 'libre';
+      var conductor = null, patente = null;
+      if (BLOCKED.indexOf(i)  !== -1) { estado = 'bloqueado'; }
+      else if (RESERVED.indexOf(i) !== -1) { estado = 'reservado'; conductor = NAMES[i%10]; patente = PLATES[i%10]; }
+      else if (OCCUPIED.indexOf(i) !== -1) { estado = 'ocupado'; conductor = NAMES[i%10]; patente = PLATES[i%10]; }
+      SPACES[i] = { id: i, sector: sector, estado: estado, conductor: conductor, patente: patente };
+    }
+  })();
+
+  function countStats() {
+    var libre=0,ocup=0,res=0,bloq=0;
+    Object.values(SPACES).forEach(function(s) {
+      if(s.estado==='libre') libre++;
+      else if(s.estado==='ocupado') ocup++;
+      else if(s.estado==='reservado') res++;
+      else bloq++;
+    });
+    return { libre:libre, ocup:ocup, res:res, bloq:bloq };
+  }
+
+  var MOCK_USERS_LIST = [
+    { name:'Roberto Silva',    email:'guardia@duocuc.cl',      role:'guardia',       status:'active', last:'Hoy 08:14' },
+    { name:'María González',   email:'coordinacion@duocuc.cl', role:'coordinacion',  status:'active', last:'Hoy 09:01' },
+    { name:'Benjamín Mella',   email:'benmella@duocuc.cl',     role:'profesor',      status:'active', last:'Hoy 09:33' },
+    { name:'Diego Gutiérrez',  email:'dgutierrez@duocuc.cl',   role:'profesor',      status:'active', last:'Hoy 10:05' },
+    { name:'Génesis Hernández',email:'ghernandez@duocuc.cl',   role:'profesor',      status:'inactive',last:'Ayer 16:20' },
+  ];
+
+  var MOCK_RESERVAS = [
+    { espacio:'E-25', sector:'A', fecha:'05-06-2026', hora:'08:00–12:00', estado:'activa' },
+    { espacio:'E-75', sector:'C', fecha:'05-06-2026', hora:'13:00–15:00', estado:'activa' },
+    { espacio:'E-50', sector:'B', fecha:'06-06-2026', hora:'09:00–11:00', estado:'pendiente' },
+  ];
+
+  /* ── SIDEBAR SETUP ──────────────────────────────── */
+  var NAV = {
+    coordinacion: [
+      { id:'inicio',   ico:'🏠', label:'Inicio' },
+      { id:'mapa',     ico:'🗺️', label:'Mapa de espacios' },
+      { id:'reservas', ico:'📋', label:'Reservas' },
+      { id:'usuarios', ico:'👥', label:'Usuarios',   badge: null },
+      { id:'perfil',   ico:'👤', label:'Mi perfil' },
+    ],
+    profesor: [
+      { id:'inicio',   ico:'🏠', label:'Inicio' },
+      { id:'reservas', ico:'📋', label:'Mis reservas' },
+      { id:'perfil',   ico:'👤', label:'Mi perfil' },
+    ]
+  };
+
+  function buildSidebar() {
+    var nav   = document.getElementById('sidebarNav');
+    var items = NAV[auth.role] || NAV.profesor;
+    var pending = JSON.parse(localStorage.getItem('duoc_pending') || '[]');
+
+    document.getElementById('sbRole').textContent  = auth.role.charAt(0).toUpperCase() + auth.role.slice(1);
+    document.getElementById('sbName').textContent  = auth.name;
+    document.getElementById('sbEmail').textContent = auth.email;
+    var init = auth.name.split(' ').map(function(w){return w[0];}).join('').substring(0,2);
+    document.getElementById('sbAvatar').innerHTML  = '<img src="https://ui-avatars.com/api/?name=' + encodeURIComponent(auth.name) + '&background=003087&color=fff&size=64&bold=true" alt="">';
+
+    nav.innerHTML = '<div class="nav-section-label">Navegación</div>';
+    items.forEach(function(item) {
+      var badge = (item.id === 'usuarios' && pending.length > 0) ? '<span class="ni-badge">' + pending.length + '</span>' : '';
+      var btn = document.createElement('button');
+      btn.className = 'nav-item' + (item.id === 'inicio' ? ' active' : '');
+      btn.setAttribute('data-view', item.id);
+      btn.innerHTML = '<span class="ni-ico">' + item.ico + '</span>' + item.label + badge;
+      btn.onclick = function(){ switchView(item.id, btn); };
+      nav.appendChild(btn);
+    });
+  }
+
+  /* ── VIEW SWITCHING ─────────────────────────────── */
+  var currentView = 'inicio';
+  var chartsInit  = false;
+  var mapInit     = false;
+
+  function switchView(name, btn) {
+    currentView = name;
+    document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
+    document.querySelectorAll('.nav-item').forEach(function(b){ b.classList.remove('active'); });
+    var v = document.getElementById('view-' + name);
+    if (v) v.classList.add('active');
+    if (btn) btn.classList.add('active');
+
+    var TITLES = { inicio:'Dashboard', mapa:'Mapa de espacios', reservas:'Reservas', usuarios:'Gestión de usuarios', perfil:'Mi perfil' };
+    document.getElementById('pageTitle').textContent = TITLES[name] || name;
+    document.getElementById('pageBreadcrumb').textContent = 'Inicio → ' + (TITLES[name] || name);
+
+    if (name === 'inicio' && !chartsInit) { chartsInit = true; initCharts(); }
+    if (name === 'inicio' && !mapInit) { mapInit = true; setTimeout(initMap, 100); }
+    if (name === 'usuarios') renderUsers();
+    if (name === 'reservas') renderReservas();
+    if (name === 'perfil') renderPerfil();
+  }
+
+  /* ── PROFILE ────────────────────────────────────── */
+  function renderPerfil() {
+    var n = auth.name, e = auth.email, r = auth.role, c = auth.cargo || '–';
+    var ROLE_LABELS = { guardia:'Guardia', profesor:'Profesor / Docente', coordinacion:'Coordinación' };
+    document.getElementById('phAvatar').src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(n) + '&background=003087&color=fff&size=160&bold=true';
+    document.getElementById('phName').textContent  = n;
+    document.getElementById('phCargo').textContent = c;
+    document.getElementById('phEmail').textContent = e;
+    document.getElementById('pdName').textContent  = n;
+    document.getElementById('pdEmail').textContent = e;
+    document.getElementById('pdRole').textContent  = ROLE_LABELS[r] || r;
+    document.getElementById('pdCargo').textContent = c;
+    document.getElementById('pdLogin').textContent = new Date().toLocaleString('es-CL');
+  }
+
+  /* ── USERS TABLE ────────────────────────────────── */
+  function renderUsers() {
+    var ROLE_LABELS = { guardia:'Guardia', profesor:'Profesor', coordinacion:'Coordinación' };
+    var tbody = document.getElementById('usersBody');
+    tbody.innerHTML = '';
+    MOCK_USERS_LIST.forEach(function(u) {
+      var tr = document.createElement('tr');
+      var init = u.name.split(' ').map(function(w){return w[0];}).join('').substring(0,2);
+      tr.innerHTML = '<td><div style="display:flex;align-items:center;gap:8px"><img src="https://ui-avatars.com/api/?name=' + encodeURIComponent(u.name) + '&background=003087&color=fff&size=36&bold=true" style="width:30px;height:30px;border-radius:50%"> <strong>' + u.name + '</strong></div></td>' +
+        '<td style="color:var(--text2)">' + u.email + '</td>' +
+        '<td><span class="badge ' + u.role + '">' + (ROLE_LABELS[u.role]||u.role) + '</span></td>' +
+        '<td><span class="badge ' + u.status + '">' + (u.status==='active'?'✓ Activo':'Inactivo') + '</span></td>' +
+        '<td style="color:var(--text2)">' + u.last + '</td>' +
+        '<td><button class="action-btn" onclick="showToast(\'Correo enviado a ' + u.name + ' ✓\')">📧 Contactar</button><button class="action-btn" onclick="showToast(\'Acceso actualizado ✓\')">⚙️ Editar</button></td>';
+      tbody.appendChild(tr);
+    });
+
+    // Pending
+    var pending = JSON.parse(localStorage.getItem('duoc_pending') || '[]');
+    var ps = document.getElementById('pendingSection');
+    var pl = document.getElementById('pendingList');
+    pl.innerHTML = '';
+    if (pending.length === 0) {
+      ps.style.display = 'none';
+    } else {
+      ps.style.display = 'block';
+      pending.forEach(function(p, i) {
+        var div = document.createElement('div');
+        div.className = 'approval-item';
+        div.innerHTML = '<div class="ai-info"><strong>' + p.name + '</strong><span>' + p.email + ' · ' + p.cargo + ' · ' + p.fecha + '</span></div>' +
+          '<div class="ai-actions">' +
+          '<button class="approve-btn" onclick="approveUser(' + i + ',\'' + p.name + '\')">✓ Aprobar</button>' +
+          '<button class="reject-btn"  onclick="rejectUser(' + i + ')">✕ Rechazar</button>' +
+          '</div>';
+        pl.appendChild(div);
+      });
+    }
+  }
+
+  window.approveUser = function(i, name) {
+    var pending = JSON.parse(localStorage.getItem('duoc_pending') || '[]');
+    var user = pending[i];
+    if (!user) return;
+    // Add to mock users
+    MOCK_USERS_LIST.push({ name: user.name, email: user.email, role: 'profesor', status: 'active', last: 'Ahora' });
+    pending.splice(i, 1);
+    localStorage.setItem('duoc_pending', JSON.stringify(pending));
+    showToast('✅ Acceso aprobado para ' + name + '. Contraseña: duoc2024');
+    renderUsers();
+    buildSidebar();
+  };
+
+  window.rejectUser = function(i) {
+    var pending = JSON.parse(localStorage.getItem('duoc_pending') || '[]');
+    pending.splice(i, 1);
+    localStorage.setItem('duoc_pending', JSON.stringify(pending));
+    showToast('Solicitud rechazada');
+    renderUsers();
+  };
+
+  /* ── RESERVAS TABLE ─────────────────────────────── */
+  function renderReservas() {
+    var tbody = document.getElementById('reservasBody');
+    tbody.innerHTML = '';
+    MOCK_RESERVAS.forEach(function(r) {
+      var tr = document.createElement('tr');
+      var badgeClass = r.estado === 'activa' ? 'active' : 'pending';
+      tr.innerHTML = '<td><strong>' + r.espacio + '</strong></td><td>Sector ' + r.sector + '</td><td>' + r.fecha + '</td><td>' + r.hora + '</td>' +
+        '<td><span class="badge ' + badgeClass + '">' + r.estado + '</span></td>' +
+        '<td><button class="action-btn" onclick="showToast(\'Reserva cancelada\')">✕ Cancelar</button></td>';
+      tbody.appendChild(tr);
+    });
+  }
+
+  /* ── CLOCK ──────────────────────────────────────── */
+  function initClock() {
+    function tick() {
+      var n = new Date();
+      document.getElementById('clock').textContent = n.toLocaleTimeString('es-CL');
+    }
+    tick();
+    setInterval(tick, 1000);
+    document.getElementById('lineDate').textContent = new Date().toLocaleDateString('es-CL', {day:'2-digit',month:'short'});
+  }
+
+  /* ── KPI COUNTERS ───────────────────────────────── */
+  function animNum(el, to) {
+    var from = parseInt(el.textContent)||0;
+    var t0   = performance.now(), dur = 1200;
+    function step(now) {
+      var p = Math.min((now-t0)/dur, 1), e = 1-Math.pow(1-p,3);
+      el.textContent = Math.round(from + (to-from)*e);
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  function updateKPIs() {
+    var st = countStats();
+    animNum(document.getElementById('k-libre'), st.libre);
+    animNum(document.getElementById('k-ocup'),  st.ocup);
+    animNum(document.getElementById('k-res'),   st.res);
+    document.getElementById('k-pct').textContent = Math.round(st.ocup/110*100) + '% ocupación';
+  }
+
+  /* ── CHART.JS ───────────────────────────────────── */
+  var donutChartInst = null, lineChartInst = null, barChartInst = null;
+
+  function initCharts() {
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+    Chart.defaults.font.family = "'Inter', sans-serif";
+
+    var st = countStats();
+
+    // DONUT
+    var dCtx = document.getElementById('donutChart').getContext('2d');
+    donutChartInst = new Chart(dCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Libres','Ocupados','Reservados','Bloqueados'],
+        datasets: [{ data: [st.libre, st.ocup, st.res, 3], backgroundColor: ['#22c55e','#ef4444','#f59e0b','#4b5563'], borderWidth: 0, hoverOffset: 6 }]
+      },
+      options: {
+        cutout: '68%',
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: function(c){ return ' ' + c.label + ': ' + c.raw; }}}
+        }
+      }
+    });
+
+    // DONUT LEGEND
+    var lg = document.getElementById('donutLegend');
+    var COLORS = ['#22c55e','#ef4444','#f59e0b','#4b5563'];
+    var LBLS   = ['Libres','Ocupados','Reservados','Bloqueados'];
+    var VALS   = [st.libre, st.ocup, st.res, 3];
+    lg.innerHTML = LBLS.map(function(l,i){
+      return '<div style="display:flex;align-items:center;justify-content:space-between;font-size:12px">' +
+        '<span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:'+COLORS[i]+';margin-right:6px"></span>' + l + '</span>' +
+        '<strong>' + VALS[i] + '</strong></div>';
+    }).join('');
+
+    // LINE CHART (hourly data — realistic parking pattern)
+    var hours = ['06','07','08','09','10','11','12','13','14','15','16','17','18','19','20'];
+    var occ   = [5,18,45,72,85,82,60,55,70,78,65,50,35,20,10];
+    var lCtx  = document.getElementById('lineChart').getContext('2d');
+    lineChartInst = new Chart(lCtx, {
+      type: 'line',
+      data: {
+        labels: hours.map(function(h){ return h + ':00'; }),
+        datasets: [{
+          label: '% Ocupación',
+          data: occ,
+          fill: true,
+          backgroundColor: 'rgba(79,142,247,0.12)',
+          borderColor: '#4f8ef7',
+          borderWidth: 2.5,
+          pointBackgroundColor: '#4f8ef7',
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          tension: 0.4,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { min: 0, max: 100, ticks: { callback: function(v){ return v+'%'; }}, grid: { color: 'rgba(255,255,255,0.04)' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+
+    // BAR CHART (by sector)
+    var sectors = ['Sector A','Sector B','Sector C','Sector D'];
+    var totals  = [30, 30, 30, 20];
+    var occSec  = [18, 16, 14, 10];
+    var bCtx    = document.getElementById('barChart').getContext('2d');
+    barChartInst = new Chart(bCtx, {
+      type: 'bar',
+      data: {
+        labels: sectors,
+        datasets: [
+          { label:'Ocupados', data: occSec, backgroundColor: '#ef4444', borderRadius: 6, borderSkipped: false },
+          { label:'Libres',   data: totals.map(function(t,i){ return t-occSec[i]; }), backgroundColor: 'rgba(34,197,94,0.4)', borderRadius: 6, borderSkipped: false }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: true,
+        plugins: { legend: { labels: { boxWidth: 10, padding: 12, font: { size: 11 } } } },
+        scales: {
+          x: { stacked: true, grid: { display: false } },
+          y: { stacked: true, grid: { color: 'rgba(255,255,255,0.04)' } }
+        }
+      }
+    });
+
+    updateKPIs();
+
+    // Simulation: update charts + KPIs every 5s
+    setInterval(function() {
+      var ids = Object.keys(SPACES);
+      var id  = parseInt(ids[Math.floor(Math.random() * ids.length)]);
+      var sp  = SPACES[id];
+      if (sp.estado === 'bloqueado' || sp.estado === 'reservado') return;
+      sp.estado = sp.estado === 'libre' ? 'ocupado' : 'libre';
+      var st2 = countStats();
+      donutChartInst.data.datasets[0].data = [st2.libre, st2.ocup, st2.res, 3];
+      donutChartInst.update('none');
+      document.getElementById('k-libre').textContent = st2.libre;
+      document.getElementById('k-ocup').textContent  = st2.ocup;
+      document.getElementById('k-pct').textContent   = Math.round(st2.ocup/110*100) + '% ocupación';
+    }, 5000);
+  }
+
+  /* ── LEAFLET MAP ────────────────────────────────── */
+  function initMap() {
+    var map = L.map('mapContainer', { zoomControl: true, scrollWheelZoom: false })
+      .setView([-33.5064, -70.7264], 16);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19,
+    }).addTo(map);
+
+    // Custom icon
+    var parkIcon = L.divIcon({
+      html: '<div style="background:#003087;color:#fff;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;border:2px solid #4f8ef7;box-shadow:0 0 12px rgba(79,142,247,.5)">🅿️</div>',
+      className: '', iconSize: [36, 36], iconAnchor: [18, 18]
+    });
+
+    L.marker([-33.5064, -70.7264], { icon: parkIcon })
+      .addTo(map)
+      .bindPopup('<strong>Duoc UC Maipú</strong><br>Estacionamiento · 110 espacios<br>Av. Santa Julia 1759')
+      .openPopup();
+  }
+
+  /* ── SUPABASE REALTIME (pattern) ────────────────── */
+  function initSupabase() {
+    try {
+      var SUPABASE_URL = (localStorage.getItem('supabase_url') || '').trim();
+      var SUPABASE_KEY = (localStorage.getItem('supabase_key') || '').trim();
+      if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error('No config');
+      var client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      client.channel('espacios-realtime')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'espacios' }, function(payload) {
+          if (!payload.new) return;
+          var sp = payload.new;
+          if (SPACES[sp.id]) { SPACES[sp.id].estado = sp.estado; }
+          var st = countStats();
+          if (donutChartInst) {
+            donutChartInst.data.datasets[0].data = [st.libre, st.ocup, st.res, 3];
+            donutChartInst.update('none');
+          }
+          document.getElementById('k-libre').textContent = st.libre;
+          document.getElementById('k-ocup').textContent  = st.ocup;
+          showToast('🔴 Espacio E-' + sp.id + ' → ' + sp.estado);
+        })
+        .subscribe(function(s) { if(s==='SUBSCRIBED') console.log('✅ Supabase Realtime conectado'); });
+    } catch(e) {
+      console.log('ℹ️ Supabase no configurado — modo simulación activo');
+    }
+  }
+
+  /* ── TOAST ──────────────────────────────────────── */
+  var tTimer = null;
+  window.showToast = function(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    if (tTimer) clearTimeout(tTimer);
+    tTimer = setTimeout(function(){ t.classList.remove('show'); }, 2800);
+  };
+
+  /* ── LOGOUT ─────────────────────────────────────── */
+  window.logout = function() {
+    localStorage.removeItem('duoc_auth');
+    window.location.href = './index.html';
+  };
+
+  /* ── INIT ───────────────────────────────────────── */
+  buildSidebar();
+  initClock();
+  initSupabase();
+  // Init charts on first view
+  setTimeout(function() { initCharts(); chartsInit = true; initMap(); mapInit = true; }, 200);
+  renderPerfil();
+
+})();
+</script>
+</body>
+</html>

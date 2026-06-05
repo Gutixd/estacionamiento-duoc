@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Estacionamientos Inteligentes · Duoc UC Maipú</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#003087">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Parking Duoc">
+  <link rel="apple-touch-icon" href="https://ui-avatars.com/api/?name=P&background=003087&color=fff&size=192">
+
+  <!-- Ant Design Vue CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/ant-design-vue@4.2.6/dist/antd.min.css?v=20260605">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --duoc-blue:   #003087;
+      --duoc-blue2:  #004db3;
+      --duoc-light:  #e8f0fe;
+      --libre:       #52c41a;
+      --ocupado:     #ff4d4f;
+      --reservado:   #faad14;
+      --bloqueado:   #8c8c8c;
+      --sidebar-w:   240px;
+      --header-h:    64px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: #f0f2f5;
+      color: #1a1a2e;
+    }
+
+    /* ── LOGIN ──────────────────────────────────────── */
+    .login-page {
+      min-height: 100svh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--duoc-blue) 0%, var(--duoc-blue2) 60%, #1a3a6e 100%);
+      padding: 1rem;
+    }
+
+    .login-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.3);
+    }
+
+    .login-logo {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .login-logo .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 72px; height: 72px;
+      border-radius: 16px;
+      background: var(--duoc-blue);
+      color: #fff;
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 8px 24px rgba(0,48,135,0.4);
+    }
+
+    .login-logo h1 { font-size: 1.3rem; font-weight: 700; color: var(--duoc-blue); }
+    .login-logo p  { font-size: .85rem; color: #666; margin-top: .25rem; }
+
+    .role-select-label { font-size: .8rem; font-weight: 600; color: #666; margin-bottom: .5rem; display: block; }
+
+    .role-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .role-btn {
+      border: 2px solid #e8e8e8;
+      border-radius: 10px;
+      padding: .65rem .5rem;
+      cursor: pointer;
+      transition: all .2s;
+      background: #fff;
+      text-align: center;
+      font-size: .78rem;
+      font-weight: 500;
+      color: #444;
+    }
+
+    .role-btn:hover   { border-color: var(--duoc-blue); color: var(--duoc-blue); background: var(--duoc-light); }
+    .role-btn.active  { border-color: var(--duoc-blue); background: var(--duoc-blue); color: #fff; box-shadow: 0 4px 12px rgba(0,48,135,0.3); }
+    .role-btn .icon   { font-size: 1.4rem; display: block; margin-bottom: .25rem; }
+
+    .login-submit {
+      width: 100%;
+      height: 44px;
+      background: var(--duoc-blue);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: .95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s, transform .1s;
+    }
+    .login-submit:hover  { background: var(--duoc-blue2); }
+    .login-submit:active { transform: scale(.98); }
+    .login-submit:disabled { background: #ccc; cursor: not-allowed; }
+
+    /* ── LAYOUT ─────────────────────────────────────── */
+    .app-layout {
+      display: flex;
+      min-height: 100svh;
+    }
+
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--duoc-blue);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+      transition: transform .25s;
+    }
+
+    .sidebar-logo {
+      padding: 1.25rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,.1);
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+    }
+
+    .sidebar-logo .icon {
+      width: 40px; height: 40px;
+      background: rgba(255,255,255,.15);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    .sidebar-logo .text { color: #fff; }
+    .sidebar-logo .text strong { display: block; font-size: .9rem; font-weight: 700; }
+    .sidebar-logo .text span   { font-size: .7rem; opacity: .7; }
+
+    .sidebar-nav { padding: 1rem 0; flex: 1; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: .75rem 1.25rem;
+      color: rgba(255,255,255,.75);
+      cursor: pointer;
+      transition: all .15s;
+      font-size: .88rem;
+      font-weight: 500;
+      border-left: 3px solid transparent;
+    }
+
+    .nav-item:hover  { background: rgba(255,255,255,.08); color: #fff; }
+    .nav-item.active { background: rgba(255,255,255,.12); color: #fff; border-left-color: #fff; font-weight: 600; }
+    .nav-item .nav-icon { font-size: 1.1rem; width: 20px; text-align: center; flex-shrink: 0; }
+
+    .sidebar-footer {
+      padding: 1rem;
+      border-top: 1px solid rgba(255,255,255,.1);
+    }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      background: rgba(255,255,255,.1);
+      border-radius: 10px;
+      padding: .5rem .75rem;
+    }
+
+    .user-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.25);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .9rem;
+      flex-shrink: 0;
+    }
+
+    .user-info { flex: 1; min-width: 0; }
+    .user-info strong { display: block; color: #fff; font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-info span   { color: rgba(255,255,255,.6); font-size: .7rem; }
+
+    .logout-btn {
+      background: none; border: none; color: rgba(255,255,255,.5);
+      cursor: pointer; font-size: 1rem; padding: .25rem;
+      transition: color .15s;
+    }
+    .logout-btn:hover { color: #fff; }
+
+    /* ── MAIN CONTENT ───────────────────────────────── */
+    .main-content {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .topbar {
+      height: var(--header-h);
+      background: #fff;
+      border-bottom: 1px solid #e8e8e8;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.5rem;
+      position: sticky; top: 0; z-index: 50;
+    }
+
+    .topbar-title { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; }
+    .topbar-right  { display: flex; align-items: center; gap: .75rem; }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+      background: #f6ffed;
+      border: 1px solid #b7eb8f;
+      border-radius: 20px;
+      padding: .2rem .65rem;
+      font-size: .75rem;
+      color: #389e0d;
+      font-weight: 600;
+    }
+
+    .live-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #52c41a;
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: .5; transform: scale(1.3); }
+    }
+
+    .page { padding: 1.5rem; }
+
+    /* ── STAT CARDS ─────────────────────────────────── */
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1.25rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .stat-icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+
+    .stat-info .num  { font-size: 1.6rem; font-weight: 800; line-height: 1; }
+    .stat-info .lbl  { font-size: .75rem; color: #888; margin-top: .2rem; }
+
+    /* ── PARKING GRID ───────────────────────────────── */
+    .grid-panel {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1.25rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      margin-bottom: 1.5rem;
+    }
+
+    .grid-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: .75rem;
+    }
+
+    .grid-header h3 { font-size: 1rem; font-weight: 700; }
+
+    .search-input {
+      border: 1.5px solid #d9d9d9;
+      border-radius: 8px;
+      padding: .4rem .75rem;
+      font-size: .85rem;
+      outline: none;
+      transition: border-color .15s;
+      width: 200px;
+    }
+    .search-input:focus { border-color: var(--duoc-blue); }
+
+    .legend {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .legend-item {
+      display: flex; align-items: center; gap: .35rem;
+      font-size: .75rem; color: #555;
+    }
+
+    .legend-dot {
+      width: 12px; height: 12px;
+      border-radius: 3px;
+    }
+
+    .sector-label {
+      font-size: .78rem;
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin: .75rem 0 .5rem;
+    }
+
+    .spaces-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+      gap: .45rem;
+    }
+
+    .space-cell {
+      aspect-ratio: 1;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s;
+      position: relative;
+      border: 2px solid transparent;
+    }
+
+    .space-cell:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.15); }
+
+    .space-cell.libre     { background: #f6ffed; border-color: var(--libre);     color: #389e0d; }
+    .space-cell.ocupado   { background: #fff1f0; border-color: var(--ocupado);   color: #cf1322; }
+    .space-cell.reservado { background: #fffbe6; border-color: var(--reservado); color: #ad6800; }
+    .space-cell.bloqueado { background: #f5f5f5; border-color: var(--bloqueado); color: #595959; }
+    .space-cell.highlight { box-shadow: 0 0 0 3px rgba(0,48,135,.5); }
+
+    .space-num  { font-size: .72rem; font-weight: 800; }
+    .space-icon { font-size: 1rem; }
+
+    .space-tooltip {
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,.85);
+      color: #fff;
+      font-size: .7rem;
+      padding: .35rem .6rem;
+      border-radius: 6px;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 200;
+      line-height: 1.5;
+    }
+
+    /* ── CONDUCTOR VIEW ──────────────────────────────── */
+    .occupancy-panel {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .occ-title { font-size: 1rem; font-weight: 700; margin-bottom: 1.25rem; }
+
+    .occ-ring {
+      width: 140px; height: 140px;
+      margin: 0 auto 1rem;
+      position: relative;
+    }
+
+    .occ-ring svg { transform: rotate(-90deg); }
+
+    .occ-ring-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .occ-ring-label .pct  { font-size: 2rem; font-weight: 800; color: #1a1a2e; }
+    .occ-ring-label .sub  { font-size: .7rem; color: #888; }
+
+    .occ-bars {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-top: .75rem;
+    }
+
+    .occ-bar-item { text-align: center; }
+    .occ-bar-item .val { font-size: 1.25rem; font-weight: 800; }
+    .occ-bar-item .lbl { font-size: .72rem; color: #888; }
+
+    .action-panel {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      margin-bottom: 1.5rem;
+    }
+
+    .action-panel h3 { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; }
+
+    .my-space-card {
+      border: 2px solid var(--duoc-light);
+      border-radius: 10px;
+      padding: 1rem;
+      background: var(--duoc-light);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .my-space-icon {
+      width: 56px; height: 56px;
+      border-radius: 12px;
+      background: var(--duoc-blue);
+      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem;
+      flex-shrink: 0;
+    }
+
+    .my-space-info h4 { font-weight: 700; color: var(--duoc-blue); font-size: 1.1rem; }
+    .my-space-info p  { font-size: .8rem; color: #666; }
+
+    .action-btns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .75rem;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: .85rem 1rem;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+    }
+
+    .btn:active { transform: scale(.97); }
+    .btn-primary   { background: var(--duoc-blue);  color: #fff; }
+    .btn-primary:hover { background: var(--duoc-blue2); }
+    .btn-success   { background: var(--libre);      color: #fff; }
+    .btn-success:hover { background: #389e0d; }
+    .btn-danger    { background: var(--ocupado);    color: #fff; }
+    .btn-danger:hover { background: #cf1322; }
+    .btn-warning   { background: var(--reservado);  color: #fff; }
+    .btn-warning:hover { background: #ad6800; }
+    .btn-ghost     { background: #f5f5f5; color: #333; }
+    .btn-ghost:hover { background: #e8e8e8; }
+    .btn:disabled  { opacity: .5; cursor: not-allowed; transform: none; }
+
+    /* ── TABLE ───────────────────────────────────────── */
+    .table-panel {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1.25rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+
+    .table-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: .75rem;
+    }
+
+    .table-header h3 { font-size: 1rem; font-weight: 700; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .85rem;
+    }
+
+    thead th {
+      background: #fafafa;
+      padding: .65rem .85rem;
+      text-align: left;
+      font-weight: 700;
+      font-size: .78rem;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    tbody td {
+      padding: .75rem .85rem;
+      border-bottom: 1px solid #f5f5f5;
+      vertical-align: middle;
+    }
+
+    tbody tr:hover td { background: #fafafa; }
+
+    .tag {
+      display: inline-block;
+      padding: .2rem .55rem;
+      border-radius: 20px;
+      font-size: .72rem;
+      font-weight: 600;
+    }
+
+    .tag-libre     { background: #f6ffed; color: #389e0d; border: 1px solid #b7eb8f; }
+    .tag-ocupado   { background: #fff1f0; color: #cf1322; border: 1px solid #ffa39e; }
+    .tag-reservado { background: #fffbe6; color: #ad6800; border: 1px solid #ffe58f; }
+    .tag-bloqueado { background: #f5f5f5; color: #595959; border: 1px solid #d9d9d9; }
+    .tag-guardia   { background: #e6f4ff; color: #0958d9; border: 1px solid #91caff; }
+    .tag-admin     { background: #f9f0ff; color: #531dab; border: 1px solid #d3adf7; }
+    .tag-conductor { background: #f6ffed; color: #389e0d; border: 1px solid #b7eb8f; }
+
+    .action-icon {
+      background: none; border: none;
+      cursor: pointer; font-size: 1rem;
+      padding: .3rem; border-radius: 6px;
+      transition: background .15s;
+      color: #555;
+    }
+    .action-icon:hover { background: #f0f0f0; color: #1a1a2e; }
+
+    /* ── MODAL ───────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.45);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 500;
+      padding: 1rem;
+    }
+
+    .modal {
+      background: #fff;
+      border-radius: 14px;
+      padding: 1.5rem;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 24px 48px rgba(0,0,0,.25);
+    }
+
+    .modal h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; }
+
+    .modal-footer {
+      display: flex;
+      gap: .75rem;
+      justify-content: flex-end;
+      margin-top: 1.25rem;
+    }
+
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: .8rem; font-weight: 600; color: #555; margin-bottom: .35rem; }
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      border: 1.5px solid #d9d9d9;
+      border-radius: 8px;
+      padding: .5rem .75rem;
+      font-size: .9rem;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .form-group input:focus,
+    .form-group select:focus { border-color: var(--duoc-blue); }
+
+    /* ── TOAST ───────────────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem; right: 1.5rem;
+      background: #1a1a2e;
+      color: #fff;
+      padding: .75rem 1.25rem;
+      border-radius: 10px;
+      font-size: .85rem;
+      font-weight: 500;
+      z-index: 1000;
+      display: flex; align-items: center; gap: .5rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,.25);
+      animation: slideUp .25s ease;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+
+    /* ── RESPONSIVE ──────────────────────────────────── */
+    @media (max-width: 768px) {
+      :root { --sidebar-w: 0px; }
+
+      .sidebar {
+        transform: translateX(-240px);
+        width: 240px;
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .main-content { margin-left: 0; }
+      .topbar { padding: 0 1rem; }
+      .page { padding: 1rem; }
+      .spaces-grid { grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); }
+      .action-btns { grid-template-columns: 1fr; }
+    }
+
+    .hamburger {
+      display: none;
+      background: none; border: none;
+      font-size: 1.3rem; cursor: pointer;
+      color: #333; padding: .25rem;
+    }
+
+    @media (max-width: 768px) { .hamburger { display: block; } }
+
+    .overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.4);
+      z-index: 99;
+    }
+    .overlay.show { display: block; }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+
+<script src="https://unpkg.com/vue@3.4.21/dist/vue.global.prod.js"></script>
+<script src="https://unpkg.com/ant-design-vue@4.2.6/dist/antd.min.js"></script>
+
+<script>
+(function () {
+  "use strict";
+
+  const { createApp, ref, computed, reactive, onMounted, onUnmounted, watch } = Vue;
+
+  /* ── DATA ─────────────────────────────────────────── */
+
+  const ROLES = [
+    { id: 'guardia',   label: 'Guardia',       icon: '👮', view: 'guardia' },
+    { id: 'seguridad', label: 'Jefe Seguridad', icon: '🔒', view: 'seguridad' },
+    { id: 'conductor', label: 'Conductor',      icon: '🚗', view: 'conductor' },
+    { id: 'servicios', label: 'Jefe Servicios', icon: '🏢', view: 'servicios' },
+    { id: 'admin',     label: 'Super Admin',    icon: '⚙️', view: 'admin' },
+  ];
+
+  const CONDUCTORES_DATA = [
+    { id:1, nombre:'Carlos Rojas',    rut:'12.345.678-9', patente:'BBCD45', espacio:12, telefono:'+56912345678', email:'c.rojas@duocuc.cl',    rol:'conductor', activo:true },
+    { id:2, nombre:'Ana Sepúlveda',   rut:'13.456.789-0', patente:'GHJK12', espacio:27, telefono:'+56923456789', email:'a.sepulveda@duocuc.cl', rol:'conductor', activo:true },
+    { id:3, nombre:'Jorge Martínez',  rut:'14.567.890-1', patente:'RTYU89', espacio:45, telefono:'+56934567890', email:'j.martinez@duocuc.cl',  rol:'conductor', activo:true },
+    { id:4, nombre:'María González',  rut:'15.678.901-2', patente:'WQER34', espacio:68, telefono:'+56945678901', email:'m.gonzalez@duocuc.cl',  rol:'conductor', activo:false },
+    { id:5, nombre:'Pedro Fuentes',   rut:'16.789.012-3', patente:'LMNO56', espacio:82, telefono:'+56956789012', email:'p.fuentes@duocuc.cl',   rol:'conductor', activo:true },
+    { id:6, nombre:'Luisa Vargas',    rut:'17.890.123-4', patente:'PQRS78', espacio:99, telefono:'+56967890123', email:'l.vargas@duocuc.cl',    rol:'conductor', activo:true },
+    { id:7, nombre:'Roberto Silva',   rut:'18.901.234-5', patente:'TUVW90', espacio:null,telefono:'+56978901234', email:'r.silva@duocuc.cl',    rol:'guardia',   activo:true },
+    { id:8, nombre:'Patricia Castro', rut:'19.012.345-6', patente:null,     espacio:null,telefono:'+56989012345', email:'p.castro@duocuc.cl',   rol:'admin',     activo:true },
+  ];
+
+  function makeSpaces() {
+    const spaces = [];
+    const occupied = [2,5,7,12,15,18,22,27,30,31,35,38,42,45,48,51,55,58,60,62,65,68,72,75,78,81,82,85,88,91,95,99,102,105,108];
+    const reserved = [10, 20, 50, 70, 100];
+    const blocked  = [33, 66, 90];
+
+    for (let i = 1; i <= 110; i++) {
+      let estado = 'libre';
+      let conductor = null;
+      let patente   = null;
+      let hora      = null;
+
+      if (blocked.includes(i))  estado = 'bloqueado';
+      else if (reserved.includes(i)) estado = 'reservado';
+      else if (occupied.includes(i)) {
+        estado = 'ocupado';
+        const c = CONDUCTORES_DATA.find(c => c.espacio === i);
+        if (c) { conductor = c.nombre; patente = c.patente; }
+        const h = new Date(Date.now() - Math.random()*3600000*4);
+        hora = h.getHours().toString().padStart(2,'0') + ':' + h.getMinutes().toString().padStart(2,'0');
+      }
+
+      const sector = i <= 30 ? 'A' : i <= 60 ? 'B' : i <= 90 ? 'C' : 'D';
+      spaces.push({ id: i, numero: i, sector, estado, conductor, patente, hora, hovered: false });
+    }
+    return spaces;
+  }
+
+  /* ── APP ──────────────────────────────────────────── */
+  const app = createApp({
+    setup() {
+      const view        = ref('login');
+      const currentUser = ref(null);
+      const selectedRole = ref(null);
+      const sidebarOpen  = ref(false);
+      const spaces       = ref(makeSpaces());
+      const conductores  = ref([...CONDUCTORES_DATA]);
+      const searchPat    = ref('');
+      const toast        = ref(null);
+      const toastTimer   = ref(null);
+      const myRegistered = ref(false);
+      const showModal    = ref(false);
+      const modalMode    = ref('add');
+      const modalData    = ref({ nombre:'', rut:'', patente:'', email:'', telefono:'', rol:'conductor' });
+      let   simInterval  = null;
+
+      /* Stats */
+      const occupied   = computed(() => spaces.value.filter(s => s.estado === 'ocupado').length);
+      const free       = computed(() => spaces.value.filter(s => s.estado === 'libre').length);
+      const reserved   = computed(() => spaces.value.filter(s => s.estado === 'reservado').length);
+      const blocked    = computed(() => spaces.value.filter(s => s.estado === 'bloqueado').length);
+      const pct        = computed(() => Math.round(occupied.value / 110 * 100));
+      const ringDash   = computed(() => Math.round(pct.value / 100 * 283));
+
+      const ringColor  = computed(() => {
+        if (pct.value < 60) return '#52c41a';
+        if (pct.value < 85) return '#faad14';
+        return '#ff4d4f';
+      });
+
+      /* Sectors */
+      const sectors = computed(() => {
+        const sMap = {};
+        spaces.value.forEach(s => {
+          if (!sMap[s.sector]) sMap[s.sector] = [];
+          let show = true;
+          if (searchPat.value) {
+            show = s.patente && s.patente.toUpperCase().includes(searchPat.value.toUpperCase());
+          }
+          sMap[s.sector].push({ ...s, highlight: searchPat.value && show });
+        });
+        return Object.entries(sMap).map(([k,v]) => ({ sector: k, spaces: v }));
+      });
+
+      /* Conductor's space */
+      const mySpace = computed(() => {
+        if (!currentUser.value) return null;
+        return spaces.value.find(s => s.numero === 12) || null;
+      });
+
+      /* Toast helper */
+      function showToast(msg, icon = '✅') {
+        if (toastTimer.value) clearTimeout(toastTimer.value);
+        toast.value = { msg, icon };
+        toastTimer.value = setTimeout(() => toast.value = null, 3000);
+      }
+
+      /* Login */
+      function login() {
+        if (!selectedRole.value) return;
+        const role = ROLES.find(r => r.id === selectedRole.value);
+        currentUser.value = { nombre: 'Diego Gutierrez', rol: role.label, icon: role.icon };
+        view.value = role.view;
+        startSimulation();
+      }
+
+      function logout() {
+        stopSimulation();
+        currentUser.value = null;
+        selectedRole.value = null;
+        view.value = 'login';
+        sidebarOpen.value = false;
+      }
+
+      /* Nav */
+      const navItems = computed(() => {
+        const items = [
+          { id:'guardia',   label:'Panel Guardia',    icon:'🅿️' },
+          { id:'conductor', label:'Vista Conductor',  icon:'🚗' },
+          { id:'seguridad', label:'Jefe Seguridad',   icon:'🔒' },
+          { id:'servicios', label:'Servicios',        icon:'📊' },
+          { id:'admin',     label:'Super Admin',      icon:'⚙️' },
+        ];
+        return items;
+      });
+
+      function goTo(v) {
+        view.value = v;
+        sidebarOpen.value = false;
+      }
+
+      /* Space actions */
+      function toggleSpace(space) {
+        if (space.estado === 'bloqueado') return;
+        if (space.estado === 'libre') {
+          space.estado = 'ocupado';
+          space.hora = new Date().toTimeString().slice(0,5);
+          showToast(`Espacio ${space.numero} marcado como ocupado`, '🔴');
+        } else if (space.estado === 'ocupado') {
+          space.estado = 'libre';
+          space.conductor = null; space.patente = null; space.hora = null;
+          showToast(`Espacio ${space.numero} liberado`, '🟢');
+        } else if (space.estado === 'reservado') {
+          space.estado = 'bloqueado';
+          showToast(`Espacio ${space.numero} bloqueado`, '⚫');
+        }
+      }
+
+      function reserveSpace(space) {
+        if (space.estado !== 'libre') { showToast('Solo se pueden reservar espacios libres', '⚠️'); return; }
+        space.estado = 'reservado';
+        showToast(`Espacio ${space.numero} reservado`, '🟡');
+      }
+
+      function blockSpace(space) {
+        space.estado = 'bloqueado';
+        showToast(`Espacio ${space.numero} bloqueado`, '⚫');
+      }
+
+      function freeSpace(space) {
+        space.estado = 'libre';
+        space.conductor = null; space.patente = null; space.hora = null;
+        showToast(`Espacio ${space.numero} liberado`, '🟢');
+      }
+
+      /* Conductor actions */
+      function registerEntry() {
+        if (myRegistered.value) return;
+        myRegistered.value = true;
+        const s = spaces.value.find(s => s.numero === 12);
+        if (s) { s.estado = 'ocupado'; s.hora = new Date().toTimeString().slice(0,5); s.conductor = 'Diego Gutierrez'; s.patente = 'BBCD45'; }
+        showToast('Ingreso registrado - Espacio A-12', '✅');
+      }
+
+      function registerExit() {
+        if (!myRegistered.value) return;
+        myRegistered.value = false;
+        const s = spaces.value.find(s => s.numero === 12);
+        if (s) { s.estado = 'libre'; s.conductor = null; s.patente = null; s.hora = null; }
+        showToast('Salida registrada', '👋');
+      }
+
+      /* Conductores table */
+      function openAddModal() {
+        modalMode.value = 'add';
+        modalData.value = { nombre:'', rut:'', patente:'', email:'', telefono:'', rol:'conductor' };
+        showModal.value = true;
+      }
+
+      function saveModal() {
+        if (modalMode.value === 'add') {
+          conductores.value.push({ ...modalData.value, id: Date.now(), espacio: null, activo: true });
+          showToast('Conductor enrolado correctamente', '✅');
+        }
+        showModal.value = false;
+      }
+
+      function toggleActive(c) {
+        c.activo = !c.activo;
+        showToast(c.activo ? `${c.nombre} activado` : `${c.nombre} desactivado`, c.activo ? '✅' : '🚫');
+      }
+
+      function deleteRow(c) {
+        if (confirm(`¿Eliminar a ${c.nombre}?`)) {
+          conductores.value = conductores.value.filter(x => x.id !== c.id);
+          showToast('Usuario eliminado', '🗑️');
+        }
+      }
+
+      /* Simulation */
+      function startSimulation() {
+        simInterval = setInterval(() => {
+          const freeSpaces = spaces.value.filter(s => s.estado === 'libre');
+          const occSpaces  = spaces.value.filter(s => s.estado === 'ocupado');
+          if (Math.random() > 0.5 && freeSpaces.length > 5) {
+            const s = freeSpaces[Math.floor(Math.random() * freeSpaces.length)];
+            s.estado = 'ocupado';
+            s.hora = new Date().toTimeString().slice(0,5);
+          } else if (occSpaces.length > 20) {
+            const s = occSpaces[Math.floor(Math.random() * occSpaces.length)];
+            if (!s.conductor) { s.estado = 'libre'; s.hora = null; }
+          }
+        }, 4000);
+      }
+
+      function stopSimulation() {
+        if (simInterval) clearInterval(simInterval);
+      }
+
+      onMounted(() => {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('./sw.js').catch(() => {});
+        }
+      });
+
+      onUnmounted(stopSimulation);
+
+      return {
+        view, currentUser, selectedRole, sidebarOpen,
+        spaces, conductores, searchPat, toast,
+        myRegistered, showModal, modalMode, modalData,
+        occupied, free, reserved, blocked, pct, ringDash, ringColor,
+        sectors, mySpace, navItems, ROLES,
+        login, logout, goTo, toggleSpace, reserveSpace, blockSpace, freeSpace,
+        registerEntry, registerExit,
+        openAddModal, saveModal, toggleActive, deleteRow,
+      };
+    },
+
+    template: `
+      <!-- LOGIN -->
+      <div v-if="view === 'login'" class="login-page">
+        <div class="login-card">
+          <div class="login-logo">
+            <div class="brand-badge">🅿️</div>
+            <h1>Duoc UC Maipú</h1>
+            <p>Sistema de Gestión de Estacionamientos</p>
+          </div>
+
+          <span class="role-select-label">Selecciona tu rol</span>
+          <div class="role-grid">
+            <button
+              v-for="r in ROLES" :key="r.id"
+              class="role-btn" :class="{ active: selectedRole === r.id }"
+              @click="selectedRole = r.id"
+            >
+              <span class="icon">{{ r.icon }}</span>
+              {{ r.label }}
+            </button>
+          </div>
+
+          <button class="login-submit" :disabled="!selectedRole" @click="login">
+            Ingresar al sistema →
+          </button>
+        </div>
+      </div>
+
+      <!-- MAIN APP -->
+      <div v-else class="app-layout">
+
+        <!-- Sidebar overlay (mobile) -->
+        <div class="overlay" :class="{ show: sidebarOpen }" @click="sidebarOpen = false"></div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar" :class="{ open: sidebarOpen }">
+          <div class="sidebar-logo">
+            <div class="icon">🅿️</div>
+            <div class="text">
+              <strong>Parking Duoc</strong>
+              <span>Sede Maipú</span>
+            </div>
+          </div>
+          <nav class="sidebar-nav">
+            <div
+              v-for="item in navItems" :key="item.id"
+              class="nav-item"
+              :class="{ active: view === item.id }"
+              @click="goTo(item.id)"
+            >
+              <span class="nav-icon">{{ item.icon }}</span>
+              {{ item.label }}
+            </div>
+          </nav>
+          <div class="sidebar-footer">
+            <div class="user-pill">
+              <div class="user-avatar">{{ currentUser?.icon }}</div>
+              <div class="user-info">
+                <strong>{{ currentUser?.nombre }}</strong>
+                <span>{{ currentUser?.rol }}</span>
+              </div>
+              <button class="logout-btn" @click="logout" title="Cerrar sesión">⏻</button>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Main -->
+        <div class="main-content">
+          <header class="topbar">
+            <div style="display:flex;align-items:center;gap:.75rem">
+              <button class="hamburger" @click="sidebarOpen = !sidebarOpen">☰</button>
+              <span class="topbar-title">
+                {{ view === 'guardia' ? 'Panel Guardia' :
+                   view === 'conductor' ? 'Vista Conductor' :
+                   view === 'seguridad' ? 'Jefe de Seguridad' :
+                   view === 'servicios' ? 'Servicios Generales' :
+                   'Super Admin' }}
+              </span>
+            </div>
+            <div class="topbar-right">
+              <div class="live-badge">
+                <span class="live-dot"></span>
+                EN VIVO
+              </div>
+              <span style="font-size:.82rem;color:#888;">{{ occupied }}/110 ocupados</span>
+            </div>
+          </header>
+
+          <!-- ── GUARDIA VIEW ── -->
+          <main v-if="view === 'guardia'" class="page">
+            <div class="stat-row">
+              <div class="stat-card">
+                <div class="stat-icon" style="background:#f6ffed">🟢</div>
+                <div class="stat-info">
+                  <div class="num" style="color:var(--libre)">{{ free }}</div>
+                  <div class="lbl">Espacios Libres</div>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon" style="background:#fff1f0">🔴</div>
+                <div class="stat-info">
+                  <div class="num" style="color:var(--ocupado)">{{ occupied }}</div>
+                  <div class="lbl">Ocupados</div>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon" style="background:#fffbe6">🟡</div>
+                <div class="stat-info">
+                  <div class="num" style="color:var(--reservado)">{{ reserved }}</div>
+                  <div class="lbl">Reservados</div>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon" style="background:#f5f5f5">⚫</div>
+                <div class="stat-info">
+                  <div class="num" style="color:var(--bloqueado)">{{ blocked }}</div>
+                  <div class="lbl">Bloqueados</div>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon" style="background:#e6f4ff">📊</div>
+                <div class="stat-info">
+                  <div class="num" style="color:#0958d9">{{ pct }}%</div>
+                  <div class="lbl">Ocupación</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid-panel">
+              <div class="grid-header">
+                <h3>🗺️ Mapa de Estacionamientos — 110 espacios</h3>
+                <input
+                  v-model="searchPat"
+                  class="search-input"
+                  placeholder="🔍 Buscar por patente..."
+                />
+              </div>
+              <div class="legend">
+                <div class="legend-item"><div class="legend-dot" style="background:var(--libre)"></div> Libre</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--ocupado)"></div> Ocupado</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--reservado)"></div> Reservado</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--bloqueado)"></div> Bloqueado</div>
+              </div>
+
+              <div v-for="sec in sectors" :key="sec.sector">
+                <div class="sector-label">Sector {{ sec.sector }}</div>
+                <div class="spaces-grid">
+                  <div
+                    v-for="s in sec.spaces"
+                    :key="s.id"
+                    class="space-cell"
+                    :class="[s.estado, { highlight: s.highlight }]"
+                    @click="toggleSpace(s)"
+                    @mouseenter="s.hovered = true"
+                    @mouseleave="s.hovered = false"
+                  >
+                    <div v-if="s.hovered && s.estado === 'ocupado'" class="space-tooltip">
+                      <div>🚗 {{ s.patente || 'Sin patente' }}</div>
+                      <div>👤 {{ s.conductor || 'Desconocido' }}</div>
+                      <div>🕐 Desde {{ s.hora }}</div>
+                    </div>
+                    <span class="space-icon">
+                      {{ s.estado === 'libre' ? '🟢' : s.estado === 'ocupado' ? '🔴' : s.estado === 'reservado' ? '🟡' : '⚫' }}
+                    </span>
+                    <span class="space-num">{{ s.numero }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </main>
+
+          <!-- ── CONDUCTOR VIEW ── -->
+          <main v-else-if="view === 'conductor'" class="page">
+            <div class="occupancy-panel">
+              <div class="occ-title">Nivel de Ocupación en Tiempo Real</div>
+              <div class="occ-ring">
+                <svg width="140" height="140" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="45" fill="none" stroke="#f0f0f0" stroke-width="8"/>
+                  <circle
+                    cx="50" cy="50" r="45"
+                    fill="none"
+                    :stroke="ringColor"
+                    stroke-width="8"
+                    stroke-linecap="round"
+                    :stroke-dasharray="ringDash + ' 283'"
+                    stroke-dashoffset="0"
+                    style="transition:stroke-dasharray .6s ease"
+                  />
+                </svg>
+                <div class="occ-ring-label">
+                  <span class="pct">{{ pct }}%</span>
+                  <span class="sub">ocupado</span>
+                </div>
+              </div>
+              <div class="occ-bars">
+                <div class="occ-bar-item">
+                  <div class="val" style="color:var(--libre)">{{ free }}</div>
+                  <div class="lbl">Libres</div>
+                </div>
+                <div class="occ-bar-item">
+                  <div class="val" style="color:var(--ocupado)">{{ occupied }}</div>
+                  <div class="lbl">Ocupados</div>
+                </div>
+                <div class="occ-bar-item">
+                  <div class="val" style="color:#003087">110</div>
+                  <div class="lbl">Total</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="action-panel">
+              <h3>Mi Espacio Asignado</h3>
+              <div class="my-space-card">
+                <div class="my-space-icon">🅿️</div>
+                <div class="my-space-info">
+                  <h4>Espacio A-12</h4>
+                  <p>Sector A · Fila 1 · Planta baja</p>
+                  <p style="margin-top:.25rem">
+                    <span :class="'tag tag-' + (myRegistered ? 'ocupado' : 'libre')">
+                      {{ myRegistered ? '● En uso' : '● Disponible' }}
+                    </span>
+                  </p>
+                </div>
+              </div>
+              <div class="action-btns">
+                <button class="btn btn-success" :disabled="myRegistered" @click="registerEntry">
+                  ✅ Registrar Ingreso
+                </button>
+                <button class="btn btn-danger" :disabled="!myRegistered" @click="registerExit">
+                  🚪 Registrar Salida
+                </button>
+              </div>
+            </div>
+
+            <div class="action-panel">
+              <h3>📞 Contactar Guardia</h3>
+              <div class="form-group">
+                <label>Mensaje de incidencia</label>
+                <input type="text" placeholder="Ej: Mi espacio está bloqueado por otro vehículo..." />
+              </div>
+              <button class="btn btn-primary" style="width:100%" @click="() => { showToast('Mensaje enviado a guardia', '📨') }">
+                📨 Enviar Mensaje
+              </button>
+            </div>
+          </main>
+
+          <!-- ── SEGURIDAD VIEW ── -->
+          <main v-else-if="view === 'seguridad'" class="page">
+            <div class="stat-row">
+              <div class="stat-card">
+                <div class="stat-icon" style="background:#f6ffed">🟢</div>
+                <div class="stat-info"><div class="num" style="color:var(--libre)">{{ free }}</div><div class="lbl">Libres</div></div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon" style="background:#fff1f0">🔴</div>
+                <div class="stat-info"><div class="num" style="color:var(--ocupado)">{{ occupied }}</div><div class="lbl">Ocupados</div></div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon" style="background:#e6f4ff">📊</div>
+                <div class="stat-info"><div class="num" style="color:#0958d9">{{ pct }}%</div><div class="lbl">Ocupación</div></div>
+              </div>
+            </div>
+            <div class="grid-panel">
+              <div class="grid-header">
+                <h3>🔒 Gestión de Espacios</h3>
+                <input v-model="searchPat" class="search-input" placeholder="🔍 Buscar patente..." />
+              </div>
+              <div class="legend">
+                <div class="legend-item"><div class="legend-dot" style="background:var(--libre)"></div> Libre</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--ocupado)"></div> Ocupado</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--reservado)"></div> Reservado</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--bloqueado)"></div> Bloqueado</div>
+              </div>
+              <div v-for="sec in sectors" :key="sec.sector">
+                <div class="sector-label">Sector {{ sec.sector }}</div>
+                <div class="spaces-grid">
+                  <div
+                    v-for="s in sec.spaces" :key="s.id"
+                    class="space-cell" :class="[s.estado, { highlight: s.highlight }]"
+                    @click="freeSpace(s)" :title="'Click para liberar · E' + s.numero"
+                  >
+                    <span class="space-icon">
+                      {{ s.estado==='libre'?'🟢':s.estado==='ocupado'?'🔴':s.estado==='reservado'?'🟡':'⚫' }}
+                    </span>
+                    <span class="space-num">{{ s.numero }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </main>
+
+          <!-- ── SERVICIOS VIEW ── -->
+          <main v-else-if="view === 'servicios'" class="page">
+            <div class="stat-row">
+              <div class="stat-card"><div class="stat-icon" style="background:#f6ffed">🟢</div><div class="stat-info"><div class="num" style="color:var(--libre)">{{ free }}</div><div class="lbl">Libres</div></div></div>
+              <div class="stat-card"><div class="stat-icon" style="background:#fff1f0">🔴</div><div class="stat-info"><div class="num" style="color:var(--ocupado)">{{ occupied }}</div><div class="lbl">Ocupados</div></div></div>
+              <div class="stat-card"><div class="stat-icon" style="background:#e6f4ff">📊</div><div class="stat-info"><div class="num" style="color:#0958d9">{{ pct }}%</div><div class="lbl">Ocupación</div></div></div>
+            </div>
+
+            <!-- Mini chart simulation -->
+            <div class="grid-panel" style="margin-bottom:1.5rem">
+              <h3 style="margin-bottom:1rem">📈 Tendencia de Ocupación (últimas 12 horas)</h3>
+              <div style="display:flex;align-items:flex-end;gap:6px;height:120px">
+                <div v-for="(h,i) in [45,52,68,75,82,90,88,72,65,58,50,pct]" :key="i"
+                  :style="{ height: h+'%', flex:1, borderRadius:'6px 6px 0 0',
+                    background: h >= 85 ? 'var(--ocupado)' : h >= 60 ? 'var(--reservado)' : 'var(--libre)',
+                    opacity: i < 11 ? 0.7 : 1, transition: 'height .4s ease' }"
+                  :title="h + '% a las ' + (7+i) + ':00'"
+                ></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-top:.5rem">
+                <span v-for="h in ['07h','08h','09h','10h','11h','12h','13h','14h','15h','16h','17h','18h']" :key="h"
+                  style="font-size:.65rem;color:#aaa;flex:1;text-align:center">{{ h }}</span>
+              </div>
+            </div>
+
+            <div class="table-panel">
+              <div class="table-header">
+                <h3>📋 Registro de Uso del Día</h3>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Vehículo</th>
+                    <th>Conductor</th>
+                    <th>Espacio</th>
+                    <th>Ingreso</th>
+                    <th>Salida</th>
+                    <th>Duración</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="c in conductores.filter(x=>x.espacio)" :key="c.id">
+                    <td><strong>{{ c.patente }}</strong></td>
+                    <td>{{ c.nombre }}</td>
+                    <td>E-{{ c.espacio }}</td>
+                    <td>08:{{ Math.floor(Math.random()*60).toString().padStart(2,'0') }}</td>
+                    <td>–</td>
+                    <td><span class="tag tag-ocupado">Activo</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </main>
+
+          <!-- ── ADMIN VIEW ── -->
+          <main v-else-if="view === 'admin'" class="page">
+            <div class="stat-row">
+              <div class="stat-card">
+                <div class="stat-icon" style="background:#e6f4ff">👥</div>
+                <div class="stat-info"><div class="num" style="color:#0958d9">{{ conductores.length }}</div><div class="lbl">Total Usuarios</div></div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon" style="background:#f6ffed">✅</div>
+                <div class="stat-info"><div class="num" style="color:var(--libre)">{{ conductores.filter(c=>c.activo).length }}</div><div class="lbl">Activos</div></div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon" style="background:#fff1f0">🚫</div>
+                <div class="stat-info"><div class="num" style="color:var(--ocupado)">{{ conductores.filter(c=>!c.activo).length }}</div><div class="lbl">Inactivos</div></div>
+              </div>
+            </div>
+
+            <div class="table-panel">
+              <div class="table-header">
+                <h3>👥 Gestión de Usuarios / Conductores</h3>
+                <button class="btn btn-primary" style="font-size:.82rem;padding:.5rem 1rem" @click="openAddModal">
+                  + Enrolar Conductor
+                </button>
+              </div>
+              <div style="overflow-x:auto">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Nombre</th>
+                      <th>RUT</th>
+                      <th>Patente</th>
+                      <th>Espacio</th>
+                      <th>Email</th>
+                      <th>Rol</th>
+                      <th>Estado</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="c in conductores" :key="c.id">
+                      <td><strong>{{ c.nombre }}</strong></td>
+                      <td style="color:#888;font-size:.8rem">{{ c.rut }}</td>
+                      <td>{{ c.patente || '–' }}</td>
+                      <td>{{ c.espacio ? 'E-' + c.espacio : '–' }}</td>
+                      <td style="font-size:.78rem;color:#888">{{ c.email }}</td>
+                      <td><span :class="'tag tag-' + c.rol">{{ c.rol }}</span></td>
+                      <td>
+                        <span :class="c.activo ? 'tag tag-libre' : 'tag tag-bloqueado'">
+                          {{ c.activo ? 'Activo' : 'Inactivo' }}
+                        </span>
+                      </td>
+                      <td>
+                        <button class="action-icon" @click="toggleActive(c)" :title="c.activo ? 'Desactivar' : 'Activar'">
+                          {{ c.activo ? '🚫' : '✅' }}
+                        </button>
+                        <button class="action-icon" @click="deleteRow(c)" title="Eliminar">🗑️</button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </main>
+        </div>
+
+        <!-- MODAL -->
+        <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
+          <div class="modal">
+            <h3>➕ Enrolar Nuevo Conductor</h3>
+            <div class="form-group">
+              <label>Nombre completo</label>
+              <input v-model="modalData.nombre" type="text" placeholder="Ej: Juan Pérez González" />
+            </div>
+            <div class="form-group">
+              <label>RUT</label>
+              <input v-model="modalData.rut" type="text" placeholder="12.345.678-9" />
+            </div>
+            <div class="form-group">
+              <label>Patente vehículo</label>
+              <input v-model="modalData.patente" type="text" placeholder="ABCD12" style="text-transform:uppercase" />
+            </div>
+            <div class="form-group">
+              <label>Email institucional</label>
+              <input v-model="modalData.email" type="email" placeholder="nombre@duocuc.cl" />
+            </div>
+            <div class="form-group">
+              <label>Teléfono</label>
+              <input v-model="modalData.telefono" type="tel" placeholder="+56912345678" />
+            </div>
+            <div class="form-group">
+              <label>Rol</label>
+              <select v-model="modalData.rol">
+                <option value="conductor">Conductor</option>
+                <option value="guardia">Guardia</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-ghost" @click="showModal = false">Cancelar</button>
+              <button class="btn btn-primary" @click="saveModal">Guardar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TOAST -->
+        <div v-if="toast" class="toast">
+          <span>{{ toast.icon }}</span>
+          <span>{{ toast.msg }}</span>
+        </div>
+      </div>
+    `,
+  });
+
+  app.mount('#app');
+})();
+</script>
+</body>
+</html>
