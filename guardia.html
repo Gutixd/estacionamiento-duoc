@@ -1229,6 +1229,7 @@
     document.getElementById('bottomSheet').classList.remove('open');
     currentSpaceId = null;
   }
+  window.closeSheet = closeSheet;
 
   function changeState(id, newState) {
     var sp = spaces[id];

@@ -163,8 +163,42 @@
     .kpi-card:hover, .chart-card:hover, .table-card:hover, .approval-card:hover, .profile-hero:hover, .profile-detail:hover {
       transform: translateY(-3px);
       box-shadow: var(--shadow-lg);
-      border-color: rgba(79, 142, 247, 0.3);
+      border-color: rgba(0, 36, 84, 0.25);
     }
+
+    /* ── MICRO-INTERACCIONES ── */
+    .btn-sm, .filter-btn, .action-btn, .approve-btn, .reject-btn {
+      transition: transform .15s ease, box-shadow .15s ease, background .18s ease, color .18s ease, border-color .18s ease;
+    }
+    .btn-sm:hover, .filter-btn:hover { transform: translateY(-1px); }
+    .btn-sm:active, .filter-btn:active, .action-btn:active, .approve-btn:active, .reject-btn:active { transform: scale(0.96); }
+    .btn-primary:hover { box-shadow: 0 4px 14px rgba(0,36,84,0.25); }
+
+    .nav-item { transition: background .18s ease, color .18s ease, padding-left .18s ease; }
+    .nav-item:hover { padding-left: 16px; }
+
+    /* Mini-stats del perfil con entrada escalonada */
+    .profile-hero [style*="grid-template-columns:1fr 1fr"] > div {
+      transition: transform .2s ease, box-shadow .2s ease;
+      animation: cardIn .4s ease both;
+    }
+    .profile-hero [style*="grid-template-columns:1fr 1fr"] > div:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+
+    /* Avatar pulse sutil al cargar */
+    .ph-avatar { animation: avatarPop .5s cubic-bezier(0.34,1.56,0.64,1) both; }
+    @keyframes avatarPop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    /* KPI números cuentan suave con fade */
+    .kpi-num { transition: color .3s ease; }
+
+    /* Badge live respira */
+    @media (prefers-reduced-motion: no-preference) {
+      .live-badge { animation: liveBreath 2.4s ease-in-out infinite; }
+    }
+    @keyframes liveBreath { 0%,100%{ box-shadow: 0 0 0 0 rgba(16,185,129,0); } 50%{ box-shadow: 0 0 0 4px rgba(16,185,129,0.08); } }
 
     /* ── KPI CARDS ── */
     .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
@@ -743,7 +777,7 @@
               <div class="pd-row"><span class="pd-label">Sede</span><span class="pd-value">Duoc UC Maipú</span></div>
               <div class="pd-row"><span class="pd-label">Sesión iniciada</span><span class="pd-value" id="pdLogin">–</span></div>
               <div style="margin-top:16px;display:flex;gap:8px;">
-                <button class="btn-sm btn-outline" onclick="showToast('Contraseña enviada al correo ✓')">Cambiar contraseña</button>
+                <button class="btn-sm btn-outline" onclick="openPasswordModal()">🔒 Cambiar contraseña</button>
                 <button class="btn-sm btn-primary" onclick="logout()">Cerrar sesión</button>
               </div>
             </div>
@@ -887,6 +921,35 @@
       <div style="margin-top:20px; display:flex; gap:10px;">
         <button class="btn-sm btn-outline" type="button" onclick="closeReservaModal()" style="flex:1; padding:12px;">Cancelar</button>
         <button class="btn-sm btn-primary" type="submit" style="flex:2; padding:12px;">Confirmar Reserva</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL CAMBIAR CONTRASEÑA -->
+<div class="modal-overlay-desktop" id="passwordModal">
+  <div class="modal-desktop" style="background: var(--bg2); color: var(--text); max-width: 400px;">
+    <div class="modal-title-desktop">
+      <strong>🔒 Cambiar contraseña</strong>
+      <button class="modal-close-desktop" onclick="closePasswordModal()">✕</button>
+    </div>
+    <form id="passwordForm" onsubmit="savePassword(event)">
+      <div class="form-group-desktop">
+        <label class="form-label-desktop">Contraseña actual</label>
+        <input class="form-input-desktop" id="pwdCurrent" type="password" placeholder="••••••••" required>
+      </div>
+      <div class="form-group-desktop">
+        <label class="form-label-desktop">Nueva contraseña</label>
+        <input class="form-input-desktop" id="pwdNew" type="password" placeholder="Mínimo 6 caracteres" required minlength="6">
+      </div>
+      <div class="form-group-desktop">
+        <label class="form-label-desktop">Confirmar nueva contraseña</label>
+        <input class="form-input-desktop" id="pwdConfirm" type="password" placeholder="Repite la contraseña" required minlength="6">
+      </div>
+      <div id="pwdError" style="display:none; color:var(--ocupado); font-size:12px; margin-bottom:10px; font-weight:600;"></div>
+      <div style="margin-top:14px; display:flex; gap:10px;">
+        <button class="btn-sm btn-outline" type="button" onclick="closePasswordModal()" style="flex:1; padding:12px;">Cancelar</button>
+        <button class="btn-sm btn-primary" type="submit" style="flex:2; padding:12px;">Actualizar contraseña</button>
       </div>
     </form>
   </div>
@@ -1147,7 +1210,9 @@
         for (var k in SPACES) {
           var sp = SPACES[k];
           if (sp && sp.conductor === auth.name && (sp.estado === 'reservado' || sp.estado === 'ocupado')) {
-            document.getElementById('phEspacio').textContent = 'E-' + sp.numero;
+            document.getElementById('phEspacio').textContent = 'E-' + (sp.numero || sp.id);
+            if (sp.patente) document.getElementById('phPatente').textContent = sp.patente;
+            document.getElementById('phEntrada').textContent = ex.entrada || new Date().toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
             break;
           }
         }
@@ -1172,6 +1237,44 @@
       read.style.display = 'none'; edit.style.display = 'block';
       btn.textContent = '✕ Cerrar';
     }
+  };
+
+  /* ── CAMBIO DE CONTRASEÑA ──────────────────────── */
+  window.openPasswordModal = function() {
+    document.getElementById('pwdCurrent').value = '';
+    document.getElementById('pwdNew').value = '';
+    document.getElementById('pwdConfirm').value = '';
+    document.getElementById('pwdError').style.display = 'none';
+    document.getElementById('passwordModal').classList.add('open');
+  };
+  window.closePasswordModal = function() {
+    document.getElementById('passwordModal').classList.remove('open');
+  };
+  window.savePassword = function(ev) {
+    ev.preventDefault();
+    var cur = document.getElementById('pwdCurrent').value;
+    var nw  = document.getElementById('pwdNew').value;
+    var cf  = document.getElementById('pwdConfirm').value;
+    var err = document.getElementById('pwdError');
+
+    function fail(msg){ err.textContent = '⚠ ' + msg; err.style.display = 'block'; }
+
+    // Validar contraseña actual: la guardada localmente o el patrón demo
+    var stored = localStorage.getItem('duoc_pwd_' + auth.email);
+    if (stored && stored !== cur) { return fail('La contraseña actual no es correcta.'); }
+    if (nw.length < 6) { return fail('La nueva contraseña debe tener al menos 6 caracteres.'); }
+    if (nw !== cf) { return fail('Las contraseñas no coinciden.'); }
+    if (nw === cur) { return fail('La nueva contraseña debe ser distinta a la actual.'); }
+
+    localStorage.setItem('duoc_pwd_' + auth.email, nw);
+
+    // Intentar persistir en Supabase si está disponible
+    if (window.DuocAPI && typeof window.DuocAPI.cambiarPassword === 'function') {
+      window.DuocAPI.cambiarPassword(auth.email, nw).catch(function(){});
+    }
+
+    closePasswordModal();
+    showToast('✅ Contraseña actualizada correctamente');
   };
 
   window.saveProfile = function() {
