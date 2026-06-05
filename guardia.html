@@ -206,9 +206,14 @@
     .stat-lbl { font-size: 10px; color: var(--text2); margin-top: 2px; font-weight: 500; }
 
     /* ── SEARCH ── */
-    .search-wrap {
+    .search-toolbar {
       flex-shrink: 0;
       padding: 0 16px 10px;
+      display: flex; gap: 10px; align-items: flex-start;
+    }
+
+    .search-wrap {
+      flex: 1;
     }
 
     .search-box {
@@ -233,6 +238,19 @@
       font-family: inherit;
     }
     .search-input::placeholder { color: var(--text3); }
+
+    .btn-download {
+      padding: 12px 16px; border-radius: 12px;
+      background: var(--blue); color: #fff; border: none;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      transition: all .2s;
+      box-shadow: var(--shadow);
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .btn-download:hover { background: var(--accent-b); transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+    .btn-download:active { transform: scale(0.98); }
 
     .search-clear {
       background: none; border: none;
@@ -764,15 +782,18 @@
     <div class="stat-chip"><span class="stat-num" id="s-pct">0%</span><span class="stat-lbl">Ocupación</span></div>
   </div>
 
-  <!-- SEARCH (visible on search tab) -->
-  <div class="search-wrap" id="searchWrap" style="display:none">
-    <div class="search-box">
-      <span class="search-icon">🔍</span>
-      <input class="search-input" id="searchInput" type="text" placeholder="Buscar patente o espacio..." autocomplete="off" autocorrect="off" spellcheck="false">
-      <button class="search-clear" id="searchClear">✕</button>
+  <!-- SEARCH TOOLBAR (visible on search tab) -->
+  <div class="search-toolbar" id="searchToolbar" style="display:none">
+    <div class="search-wrap">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input class="search-input" id="searchInput" type="text" placeholder="Buscar patente o espacio..." autocomplete="off" autocorrect="off" spellcheck="false">
+        <button class="search-clear" id="searchClear">✕</button>
+      </div>
+      <div class="search-result" id="searchResult"></div>
+      <div class="not-found" id="notFound">🔍 Sin resultados para esa búsqueda</div>
     </div>
-    <div class="search-result" id="searchResult"></div>
-    <div class="not-found" id="notFound">🔍 Sin resultados para esa búsqueda</div>
+    <button class="btn-download" id="btnDownload" title="Descargar datos en CSV">⬇️ Descargar</button>
   </div>
 
   <!-- SCROLL AREA -->
@@ -1280,8 +1301,8 @@
     if (v) v.classList.add('active');
     if (btn) btn.classList.add('active');
 
-    var sw = document.getElementById('searchWrap');
-    sw.style.display = (name === 'search') ? 'block' : 'none';
+    var sw = document.getElementById('searchToolbar');
+    sw.style.display = (name === 'search') ? 'flex' : 'none';
     if (name === 'search') {
       setTimeout(function(){ document.getElementById('searchInput').focus(); }, 100);
       renderHistory();
@@ -1303,31 +1324,49 @@
       if (!q) return;
 
       var found = null;
+      // Buscar por: patente, número de espacio, o sector
       for (var k in spaces) {
         var sp = spaces[k];
-        if ((sp.patente && sp.patente.toUpperCase().includes(q)) || String(sp.id).includes(q)) {
+        var patenteMatch = sp.patente && sp.patente.toUpperCase().includes(q);
+        var espacioMatch = String(sp.numero).includes(q); // Busca por número de espacio (E-25, E-50, etc.)
+        var sectorMatch = sp.sector && sp.sector.toUpperCase().includes(q); // Busca por sector (A, B, C, D)
+
+        if (patenteMatch || espacioMatch || sectorMatch) {
           found = sp; break;
         }
       }
 
-      if (found && found.conductor) {
-        res.innerHTML =
-          '<div class="sr-header">' +
-            window.personaAvatar(found.conductor, 40, 'var(--accent)') +
-            '<div>' +
-              '<div class="sr-name">' + found.conductor + '</div>' +
-              '<span class="sr-plate">' + (found.patente||'–') + '</span>' +
+      if (found) {
+        // Si el espacio está ocupado, mostrar info del conductor
+        if (found.conductor && found.estado === 'ocupado') {
+          res.innerHTML =
+            '<div class="sr-header">' +
+              window.personaAvatar(found.conductor, 40, 'var(--blue)') +
+              '<div>' +
+                '<div class="sr-name">' + found.conductor + '</div>' +
+                '<span class="sr-plate">' + (found.patente||'–') + '</span>' +
+              '</div>' +
             '</div>' +
-          '</div>' +
-          '<div class="sr-grid">' +
-            '<div class="sr-item"><div class="v">E-' + found.id + '</div><div class="l">Espacio</div></div>' +
-            '<div class="sr-item"><div class="v">' + found.sector + '</div><div class="l">Sector</div></div>' +
-            '<div class="sr-item"><div class="v">' + (found.hora||'–') + '</div><div class="l">Ingreso</div></div>' +
-          '</div>' +
-          '<div id="srVehiculo" style="margin-top:8px;font-size:11px;color:var(--text2)"></div>';
-        res.classList.add('show');
-        // Enriquecer con API de patentes (marca/modelo/color)
-        if (ONLINE && found.patente) consultarVehiculoAPI(found.patente);
+            '<div class="sr-grid">' +
+              '<div class="sr-item"><div class="v">E-' + found.numero + '</div><div class="l">Espacio</div></div>' +
+              '<div class="sr-item"><div class="v">' + found.sector + '</div><div class="l">Sector</div></div>' +
+              '<div class="sr-item"><div class="v">' + (found.estado.toUpperCase()) + '</div><div class="l">Estado</div></div>' +
+              '<div class="sr-item"><div class="v">' + (found.hora||'–') + '</div><div class="l">Ingreso</div></div>' +
+            '</div>' +
+            '<div id="srVehiculo" style="margin-top:8px;font-size:11px;color:var(--text2)"></div>';
+          res.classList.add('show');
+          // Enriquecer con API de patentes (marca/modelo/color)
+          if (ONLINE && found.patente) consultarVehiculoAPI(found.patente);
+        } else {
+          // Mostrar info del espacio aunque esté libre
+          res.innerHTML =
+            '<div class="sr-grid">' +
+              '<div class="sr-item"><div class="v">E-' + found.numero + '</div><div class="l">Espacio</div></div>' +
+              '<div class="sr-item"><div class="v">' + found.sector + '</div><div class="l">Sector</div></div>' +
+              '<div class="sr-item"><div class="v" style="color:' + (found.estado === 'libre' ? 'var(--libre)' : 'var(--ocupado)') + '">' + (found.estado.toUpperCase()) + '</div><div class="l">Estado</div></div>' +
+            '</div>';
+          res.classList.add('show');
+        }
       } else if (q.length >= 6 && ONLINE) {
         // No está estacionado: consultar API de patentes Chile directamente
         res.innerHTML = '<div style="text-align:center;padding:8px;color:var(--text2);font-size:13px">🔍 Consultando patente <strong>' + q + '</strong>...</div><div id="srVehiculo"></div>';
@@ -1369,6 +1408,52 @@
       res.classList.remove('show'); nf.classList.remove('show');
       inp.focus();
     });
+
+    // Botón de descarga
+    var btnDl = document.getElementById('btnDownload');
+    if (btnDl) {
+      btnDl.addEventListener('click', function(){
+        downloadSearchData();
+      });
+    }
+  }
+
+  // Función para descargar datos en CSV
+  function downloadSearchData() {
+    var rows = [
+      ['Espacio', 'Número', 'Sector', 'Estado', 'Conductor', 'Patente', 'Hora Ingreso']
+    ];
+
+    Object.values(spaces).forEach(function(sp) {
+      rows.push([
+        'E-' + sp.numero,
+        sp.numero,
+        sp.sector,
+        sp.estado.charAt(0).toUpperCase() + sp.estado.slice(1),
+        sp.conductor || '–',
+        sp.patente || '–',
+        sp.hora || '–'
+      ]);
+    });
+
+    var csv = rows.map(function(row) {
+      return row.map(function(cell) {
+        // Escapar comillas y envolver en comillas si contiene comas
+        cell = String(cell).replace(/"/g, '""');
+        return cell.includes(',') ? '"' + cell + '"' : cell;
+      }).join(',');
+    }).join('\n');
+
+    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    var link = document.createElement('a');
+    var url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'estacionamiento_' + new Date().toISOString().split('T')[0] + '.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('📥 Datos descargados ✓');
   }
 
   function renderHistory() {

@@ -517,9 +517,50 @@
     localStorage.setItem('duoc_pending', JSON.stringify(pending));
 
     if (ONLINE) {
-      window.DuocAPI.crearSolicitud(name, email, cargo).then(showOk).catch(showOk);
+      window.DuocAPI.crearSolicitud(name, email, cargo).then(function() {
+        var asunto = 'Solicitud de Acceso Recibida - Estacionamiento Inteligente Duoc UC';
+        var mensaje = 'Hola ' + name + ',\n\n' +
+                      'Hemos recibido tu solicitud de acceso para el sistema de Estacionamientos de Duoc UC Maipú.\n\n' +
+                      'Detalles de tu solicitud:\n' +
+                      '- Nombre: ' + name + '\n' +
+                      '- Correo: ' + email + '\n' +
+                      '- Cargo: ' + cargo + '\n\n' +
+                      'La coordinación evaluará tu solicitud. Una vez aprobada, recibirás otro correo con tus credenciales de acceso (contraseña temporal).\n\n' +
+                      'Saludos cordiales,\n' +
+                      'Coordinación de Estacionamientos Duoc UC Maipú';
+        window.DuocAPI.enviarCorreo(email, name, asunto, mensaje);
+        showOk();
+      }).catch(showOk);
     } else {
+      var asunto = 'Solicitud de Acceso Recibida - Estacionamiento Inteligente Duoc UC';
+      var mensaje = 'Hola ' + name + ',\n\n' +
+                    'Hemos recibido tu solicitud de acceso para el sistema de Estacionamientos de Duoc UC Maipú.\n\n' +
+                    'Detalles de tu solicitud:\n' +
+                    '- Nombre: ' + name + '\n' +
+                    '- Correo: ' + email + '\n' +
+                    '- Cargo: ' + cargo + '\n\n' +
+                    'La coordinación evaluará tu solicitud. Una vez aprobada, recibirás otro correo con tus credenciales de acceso (contraseña temporal).\n\n' +
+                    'Saludos cordiales,\n' +
+                    'Coordinación de Estacionamientos Duoc UC Maipú';
+      window.DuocAPI.enviarCorreo(email, name, asunto, mensaje);
       showOk();
+    }
+  };
+
+  window.mostrarEmailSimulado = function(email, name, asunto, mensaje) {
+    var modal = document.getElementById('emailSimuladoModal');
+    if (modal) {
+      document.getElementById('simEmailPara').textContent = name + ' <' + email + '>';
+      document.getElementById('simEmailAsunto').textContent = asunto;
+      document.getElementById('simEmailCuerpo').textContent = mensaje;
+      modal.style.display = 'flex';
+    }
+  };
+
+  window.closeEmailSimuladoModal = function() {
+    var modal = document.getElementById('emailSimuladoModal');
+    if (modal) {
+      modal.style.display = 'none';
     }
   };
 
@@ -528,5 +569,32 @@
   });
 })();
 </script>
+
+<!-- MODAL DE SIMULACIÓN DE CORREO ENVIADO -->
+<div class="modal-overlay-desktop" id="emailSimuladoModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; justify-content: center; align-items: center; background: rgba(0,0,0,0.65); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+  <div style="background: #111827; color: #f3f4f6; width: 90%; max-width: 550px; border-radius: 16px; border: 1px solid #374151; padding: 0; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column;">
+    <div style="background: #1f2937; padding: 16px 20px; border-bottom: 1px solid #374151; display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 20px;">✉️</span>
+        <strong style="color: #f3f4f6; font-size: 16px;">Simulador de Correo Electrónico</strong>
+      </div>
+      <button style="background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 18px;" onclick="closeEmailSimuladoModal()">✕</button>
+    </div>
+    <div style="padding: 20px;">
+      <div style="background: #1f2937; border-radius: 8px; padding: 12px; font-size: 13px; border: 1px solid #374151; margin-bottom: 16px; line-height: 1.5; color: #e5e7eb;">
+        <div style="margin-bottom: 6px;"><strong style="color: #9ca3af;">De:</strong> Soporte Estacionamientos Duoc UC &lt;no-reply@duocuc.cl&gt;</div>
+        <div style="margin-bottom: 6px;"><strong style="color: #9ca3af;">Para:</strong> <span id="simEmailPara" style="color: #f3f4f6;">destinatario@correo.com</span></div>
+        <div style="margin-bottom: 6px;"><strong style="color: #9ca3af;">Asunto:</strong> <span id="simEmailAsunto" style="color: #60a5fa; font-weight: 700;">Asunto de prueba</span></div>
+      </div>
+      <div style="background: #ffffff; color: #1f2937; border-radius: 8px; padding: 16px; min-height: 120px; font-family: monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; max-height: 250px; overflow-y: auto; border: 1px solid #d1d5db;" id="simEmailCuerpo">Cuerpo del correo...</div>
+      <div style="margin-top: 16px; font-size: 11px; color: #9ca3af; text-align: center; border-top: 1px dashed #374151; padding-top: 12px; line-height: 1.4;">
+        ℹ️ Para envíos reales, configura tus llaves de EmailJS en la pestaña de Ajustes de API (Dashboard de Coordinación).
+      </div>
+    </div>
+    <div style="background: #1f2937; padding: 12px 20px; text-align: right; border-top: 1px solid #374151;">
+      <button onclick="closeEmailSimuladoModal()" style="background: #003087; color: white; border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.2s; font-family: inherit;">Entendido</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

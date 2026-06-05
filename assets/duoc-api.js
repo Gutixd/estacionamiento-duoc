@@ -518,6 +518,84 @@ window.DuocAPI = (function () {
     }
   }
 
+  // ── 8) EMAILJS INTEGRATION (Envío de correos) ─────────────────
+  var EMAILJS_PUBLIC_KEY = 'YOUR_EMAILJS_PUBLIC_KEY';
+  var EMAILJS_SERVICE_ID = 'YOUR_EMAILJS_SERVICE_ID';
+  var EMAILJS_TEMPLATE_ID = 'YOUR_EMAILJS_TEMPLATE_ID';
+
+  function cargarEmailJSSDK() {
+    var pubKey = localStorage.getItem('emailjs_public_key') || EMAILJS_PUBLIC_KEY;
+    return new Promise(function(resolve, reject) {
+      if (window.emailjs) {
+        window.emailjs.init({ publicKey: pubKey });
+        resolve(window.emailjs);
+        return;
+      }
+      var script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+      script.async = true;
+      script.onload = function() {
+        if (window.emailjs) {
+          window.emailjs.init({ publicKey: pubKey });
+          resolve(window.emailjs);
+        } else {
+          reject(new Error('EmailJS SDK failed to load.'));
+        }
+      };
+      script.onerror = function() {
+        reject(new Error('EmailJS SDK load error.'));
+      };
+      document.head.appendChild(script);
+    });
+  }
+
+  async function enviarCorreo(destinatarioEmail, destinatarioNombre, asunto, mensaje) {
+    console.log('✉️ Intentando enviar correo a:', destinatarioEmail, '(' + destinatarioNombre + ')');
+    
+    var mode = localStorage.getItem('email_mode') || 'simulado';
+    var pubKey = localStorage.getItem('emailjs_public_key') || EMAILJS_PUBLIC_KEY;
+    var svcId = localStorage.getItem('emailjs_service_id') || EMAILJS_SERVICE_ID;
+    var tempId = localStorage.getItem('emailjs_template_id') || EMAILJS_TEMPLATE_ID;
+
+    if (mode === 'simulado' || pubKey === 'YOUR_EMAILJS_PUBLIC_KEY' || !pubKey) {
+      var cssEstilo = 'background: #002454; color: #fff; padding: 12px; border-radius: 8px; font-family: sans-serif; line-height: 1.5; font-size: 12px;';
+      console.log(
+        '%c✉️ SIMULACIÓN DE CORREO ENVIADO ✉️\n' +
+        '--------------------------------------------\n' +
+        'De: Soporte Estacionamientos Duoc UC <no-reply@duocuc.cl>\n' +
+        'Para: ' + destinatarioNombre + ' <' + destinatarioEmail + '>\n' +
+        'Asunto: ' + asunto + '\n\n' +
+        'Mensaje:\n' + mensaje + '\n' +
+        '--------------------------------------------\n' +
+        'ℹ️ Para envíos reales, configura tus llaves en la pestaña de Ajustes de API',
+        cssEstilo
+      );
+
+      // Si existe la función global para mostrar la vista del correo simulado, llamarla
+      if (typeof window.mostrarEmailSimulado === 'function') {
+        window.mostrarEmailSimulado(destinatarioEmail, destinatarioNombre, asunto, mensaje);
+      }
+
+      return { success: true, simulated: true };
+    }
+
+    try {
+      var ejs = await cargarEmailJSSDK();
+      var templateParams = {
+        to_email: destinatarioEmail,
+        to_name: destinatarioNombre,
+        subject: asunto,
+        message: mensaje
+      };
+      var res = await ejs.send(svcId, tempId, templateParams);
+      console.log('✅ Correo enviado con éxito vía EmailJS:', res.status, res.text);
+      return { success: true, data: res };
+    } catch(err) {
+      console.warn('❌ Error al enviar correo vía EmailJS:', err.message);
+      return { success: false, error: err.message };
+    }
+  }
+
   /* ── EXPORT ───────────────────────────────────────────────────── */
   return {
     init: init, isOnline: isOnline, client: client,
@@ -530,6 +608,6 @@ window.DuocAPI = (function () {
     aprobarSolicitud: aprobarSolicitud,
     login: login, getUsuarios: getUsuarios,
     getReservasUsuario: getReservasUsuario, crearReserva: crearReserva, cancelarReserva: cancelarReserva,
-    getEspacioDetalle: getEspacioDetalle
+    getEspacioDetalle: getEspacioDetalle, enviarCorreo: enviarCorreo
   };
 })();

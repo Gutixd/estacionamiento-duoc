@@ -695,6 +695,70 @@
         </div>
       </div>
 
+      <!-- ── CONFIG VIEW (coordinación) ── -->
+      <div class="view" id="view-config">
+        <div class="profile-grid">
+          <div class="profile-hero" style="background: var(--bg3); border: 1px solid var(--border); border-radius: 16px; padding: 28px 20px; text-align: center; box-shadow: var(--shadow);">
+            <div style="font-size: 48px; margin-bottom: 16px;">✉️</div>
+            <div class="ph-name" style="font-size: 18px; font-weight: 800;">Módulo de Correo</div>
+            <div class="ph-cargo" style="color: var(--blue); margin-top: 8px; font-weight:600; font-size: 12px;">Ajustes de API</div>
+            <p style="font-size: 12px; color: var(--text2); line-height: 1.6; margin-top: 16px; text-align: center; padding: 0 10px; font-family: inherit;">
+              Configura tus credenciales del servicio EmailJS para enviar correos reales de activación a profesores y coordinar la comunicación del sistema de estacionamientos.
+            </p>
+          </div>
+          <div class="profile-detail" style="background: var(--bg3); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: var(--shadow);">
+            <h3 style="margin-bottom: 20px; font-size: 16px; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 10px; font-weight: 700;">⚙️ Configuración de Notificaciones</h3>
+            
+            <div style="margin-bottom: 16px;">
+              <label style="display: block; font-size: 12px; color: var(--text2); margin-bottom: 6px; font-weight: 600;">Modo del Sistema</label>
+              <select id="cfgMailMode" onchange="toggleMailInputs()" style="width: 100%; border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 8px; padding: 10px; font-family: inherit; font-size: 13px; box-sizing: border-box;">
+                <option value="simulado">Simulación Local (Visualizador en pantalla)</option>
+                <option value="produccion">Producción Real (EmailJS API)</option>
+              </select>
+            </div>
+
+            <div id="cfgMailCredentialsArea" style="display: none;">
+              <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 12px; color: var(--text2); margin-bottom: 6px; font-weight: 600;">EmailJS Public Key</label>
+                <input id="cfgMailPublicKey" type="text" placeholder="Escribe tu Public Key (User ID)" style="width: 100%; border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 8px; padding: 10px; font-family: inherit; font-size: 13px; box-sizing: border-box;">
+              </div>
+              <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 12px; color: var(--text2); margin-bottom: 6px; font-weight: 600;">EmailJS Service ID</label>
+                <input id="cfgMailServiceId" type="text" placeholder="Escribe tu Service ID (ej: service_gmail)" style="width: 100%; border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 8px; padding: 10px; font-family: inherit; font-size: 13px; box-sizing: border-box;">
+              </div>
+              <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 12px; color: var(--text2); margin-bottom: 6px; font-weight: 600;">EmailJS Template ID</label>
+                <input id="cfgMailTemplateId" type="text" placeholder="Escribe tu Template ID (ej: template_abc123)" style="width: 100%; border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 8px; padding: 10px; font-family: inherit; font-size: 13px; box-sizing: border-box;">
+              </div>
+              
+              <div style="background: rgba(79, 142, 247, 0.08); border: 1px dashed var(--blue); border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 11px; color: var(--text2); line-height: 1.5; text-align: left;">
+                <strong>💡 Configuración en la plantilla de EmailJS:</strong><br>
+                Asegúrate de que tu plantilla de EmailJS contenga las siguientes variables:<br>
+                - <code>{{to_email}}</code> para el correo del destinatario.<br>
+                - <code>{{to_name}}</code> para el nombre del destinatario.<br>
+                - <code>{{subject}}</code> para el asunto.<br>
+                - <code>{{message}}</code> para el cuerpo del mensaje.<br>
+              </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+              <button class="btn-sm btn-primary" onclick="saveMailSettings()" style="padding: 10px 16px; font-size: 12px; font-family: inherit;">Guardar Cambios</button>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid var(--border); margin: 24px 0;">
+
+            <h3 style="margin-bottom: 20px; font-size: 16px; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 10px; font-weight: 700;">🧪 Prueba de Conexión</h3>
+            <div style="margin-bottom: 12px;">
+              <label style="display: block; font-size: 12px; color: var(--text2); margin-bottom: 6px; font-weight: 600;">Correo del Destinatario</label>
+              <input id="cfgTestEmail" type="email" placeholder="ejemplo@correo.com" style="width: 100%; border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 8px; padding: 10px; font-family: inherit; font-size: 13px; box-sizing: border-box;">
+            </div>
+            <div style="margin-top: 16px;">
+              <button class="btn-sm btn-outline" onclick="sendTestMail()" style="padding: 10px 16px; font-size: 12px; font-family: inherit;">✉️ Enviar Correo de Prueba</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /content -->
   </div><!-- /main -->
 </div><!-- /app -->
@@ -772,6 +836,36 @@
     <div id="detActions" style="display:flex; flex-direction:column; gap:8px;">
       <!-- Botones dinámicos de acción -->
     </div>
+  </div>
+</div>
+
+<!-- MODAL: CONTACTAR USUARIO (MANDAR CORREO) -->
+<div class="modal-overlay-desktop" id="contactoModal">
+  <div class="modal-desktop" style="background: var(--bg2); color: var(--text);">
+    <div class="modal-title-desktop">
+      <strong>📧 Enviar Mensaje a Conductor</strong>
+      <button class="modal-close-desktop" onclick="closeContactoModal()">✕</button>
+    </div>
+    <form id="contactoForm" onsubmit="handleEnviarContacto(event)">
+      <div class="form-group-desktop">
+        <label class="form-label-desktop">Destinatario</label>
+        <input class="form-input-desktop" id="conDestinatario" type="text" readonly style="background:#e2e8f0; font-weight: 600;">
+        <input type="hidden" id="conEmail">
+        <input type="hidden" id="conNombre">
+      </div>
+      <div class="form-group-desktop">
+        <label class="form-label-desktop">Asunto del Correo</label>
+        <input class="form-input-desktop" id="conAsunto" type="text" placeholder="Ej: Aviso Importante - Estacionamiento" required>
+      </div>
+      <div class="form-group-desktop">
+        <label class="form-label-desktop">Cuerpo del Mensaje</label>
+        <textarea class="form-input-desktop" id="conMensaje" placeholder="Escribe aquí tu mensaje para el conductor..." required style="height: 120px; font-family: inherit; resize: none;"></textarea>
+      </div>
+      <div style="margin-top:20px; display:flex; gap:10px;">
+        <button class="btn-sm btn-outline" type="button" onclick="closeContactoModal()" style="flex:1; padding:12px;">Cancelar</button>
+        <button class="btn-sm btn-primary" type="submit" style="flex:2; padding:12px;">Enviar Correo</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -871,6 +965,7 @@
       { id:'reservas', ico:'📋', label:'Reservas' },
       { id:'usuarios', ico:'👥', label:'Usuarios',   badge: null },
       { id:'perfil',   ico:'👤', label:'Mi perfil' },
+      { id:'config',   ico:'⚙️', label:'Ajustes de API' },
     ],
     profesor: [
       { id:'inicio',   ico:'🏠', label:'Inicio' },
@@ -916,7 +1011,7 @@
     if (v) v.classList.add('active');
     if (btn) btn.classList.add('active');
 
-    var TITLES = { inicio:'Dashboard', mapa:'Mapa de espacios', reservas:'Reservas', usuarios:'Gestión de usuarios', perfil:'Mi perfil' };
+    var TITLES = { inicio:'Dashboard', mapa:'Mapa de espacios', reservas:'Reservas', usuarios:'Gestión de usuarios', perfil:'Mi perfil', config:'Ajustes de API' };
     document.getElementById('pageTitle').textContent = TITLES[name] || name;
     document.getElementById('pageBreadcrumb').textContent = 'Inicio → ' + (TITLES[name] || name);
 
@@ -926,6 +1021,7 @@
     if (name === 'usuarios') renderUsers();
     if (name === 'reservas') renderReservas();
     if (name === 'perfil') renderPerfil();
+    if (name === 'config') initConfigView();
   }
 
   /* ── PROFILE ────────────────────────────────────── */
@@ -968,7 +1064,7 @@
           '<td><span class="badge ' + (rol==='profesor'?'profesor':rol==='coordinacion'?'coordinacion':'guardia') + '">' + (ROLE_LABELS[rol]||rol) + '</span></td>' +
           '<td><span class="badge ' + (activo?'active':'inactive') + '">' + (activo?'✓ Activo':'Inactivo') + '</span></td>' +
           '<td style="color:var(--text2)">' + last + '</td>' +
-          '<td><button class="action-btn" onclick="showToast(\'Correo enviado a ' + nombre + ' ✓\')">📧 Contactar</button><button class="action-btn" onclick="showToast(\'Acceso actualizado ✓\')">⚙️ Editar</button></td>';
+          '<td><button class="action-btn" onclick="abrirModalContacto(\'' + u.email + '\',\'' + nombre + '\')">📧 Contactar</button><button class="action-btn" onclick="showToast(\'Acceso actualizado ✓\')">⚙️ Editar</button></td>';
         tbody.appendChild(tr);
       });
     }
@@ -1001,7 +1097,7 @@
         div.className = 'approval-item';
         div.innerHTML = '<div style="display:flex;align-items:center;gap:10px">' + window.personaAvatar(nombre, 36) + '<div class="ai-info"><strong>' + nombre + '</strong><span>' + p.email + ' · ' + (p.cargo||'') + ' · ' + fecha + '</span></div></div>' +
           '<div class="ai-actions">' +
-          '<button class="approve-btn" onclick="approveUser(\'' + id + '\',\'' + nombre + '\',' + esDB + ')">✓ Aprobar</button>' +
+          '<button class="approve-btn" onclick="approveUser(\'' + id + '\',\'' + nombre + '\',' + esDB + ',\'' + p.email + '\')">✓ Aprobar</button>' +
           '<button class="reject-btn"  onclick="rejectUser(\'' + id + '\',' + esDB + ')">✕ Rechazar</button>' +
           '</div>';
         pl.appendChild(div);
@@ -1017,18 +1113,32 @@
     }
   }
 
-  window.approveUser = function(id, name, esDB) {
+  window.approveUser = function(id, name, esDB, email) {
+    var passwordTemp = 'duoc2024';
+    var asunto = 'Acceso Aprobado - Estacionamiento Inteligente Duoc UC';
+    var mensaje = 'Hola ' + name + ',\n\n' +
+                  'Tu solicitud de acceso al sistema de Estacionamientos de Duoc UC Maipú ha sido APROBADA.\n\n' +
+                  'Ya puedes ingresar a la plataforma con las siguientes credenciales:\n' +
+                  '- Correo: ' + email + '\n' +
+                  '- Contraseña Temporal: ' + passwordTemp + '\n\n' +
+                  'Recuerda cambiar tu contraseña una vez que inicies sesión en la sección "Mi Perfil".\n\n' +
+                  'Saludos cordiales,\n' +
+                  'Coordinación de Estacionamientos Duoc UC Maipú';
+
     if (esDB && ONLINE) {
-      window.DuocAPI.aprobarSolicitud(id, 'duoc2024').then(function(res) {
-        showToast('✅ Acceso aprobado para ' + name + '. Contraseña: duoc2024');
+      window.DuocAPI.aprobarSolicitud(id, passwordTemp).then(function(res) {
+        showToast('✅ Acceso aprobado para ' + name + '. Correo enviado.');
+        window.DuocAPI.enviarCorreo(email, name, asunto, mensaje);
         renderUsers();
         buildSidebar();
       }).catch(function(){ showToast('Error al aprobar'); });
     } else {
       var pending = JSON.parse(localStorage.getItem('duoc_pending') || '[]');
+      var emailLimpio = email || (pending[parseInt(id)] ? pending[parseInt(id)].email : 'correo@duocuc.cl');
       pending.splice(parseInt(id), 1);
       localStorage.setItem('duoc_pending', JSON.stringify(pending));
-      showToast('✅ Acceso aprobado para ' + name + '. Contraseña: duoc2024');
+      showToast('✅ Acceso aprobado para ' + name + '. Correo enviado.');
+      window.DuocAPI.enviarCorreo(emailLimpio, name, asunto, mensaje);
       renderUsers();
       buildSidebar();
     }
@@ -1320,6 +1430,46 @@
   window.logout = function() {
     localStorage.removeItem('duoc_auth');
     window.location.href = './index.html';
+  };
+
+  window.abrirModalContacto = function(email, nombre) {
+    document.getElementById('conDestinatario').value = nombre + ' <' + email + '>';
+    document.getElementById('conEmail').value = email;
+    document.getElementById('conNombre').value = nombre;
+    document.getElementById('conAsunto').value = '';
+    document.getElementById('conMensaje').value = '';
+    document.getElementById('contactoModal').classList.add('open');
+  };
+
+  window.closeContactoModal = function() {
+    document.getElementById('contactoModal').classList.remove('open');
+  };
+
+  window.handleEnviarContacto = function(e) {
+    e.preventDefault();
+    var email = document.getElementById('conEmail').value;
+    var nombre = document.getElementById('conNombre').value;
+    var asunto = document.getElementById('conAsunto').value.trim();
+    var mensaje = document.getElementById('conMensaje').value.trim();
+
+    if (!email || !nombre || !asunto || !mensaje) {
+      alert('Por favor complete todos los campos.');
+      return;
+    }
+
+    var mensajeConFirma = mensaje + '\n\n---\nSaludos cordiales,\n' + auth.name + '\nCoordinador de Sede\nEstacionamiento Inteligente Duoc UC Maipú';
+
+    showToast('📨 Enviando correo...');
+    window.DuocAPI.enviarCorreo(email, nombre, asunto, mensajeConFirma).then(function(res) {
+      if (res && res.success) {
+        showToast('✅ Correo enviado a ' + nombre + ' con éxito');
+        closeContactoModal();
+      } else {
+        showToast('❌ Error al enviar el correo');
+      }
+    }).catch(function() {
+      showToast('❌ Error al enviar el correo');
+    });
   };
 
   /* ── CACHE DE RESERVAS E INICIALIZACIÓN ─────────── */
@@ -1742,7 +1892,117 @@
     }, 200);
   });
 
+  /* ── AJUSTES DE CORREO Y SIMULACIÓN ──────────────── */
+  function initConfigView() {
+    var mode = localStorage.getItem('email_mode') || 'simulado';
+    document.getElementById('cfgMailMode').value = mode;
+    document.getElementById('cfgMailPublicKey').value = localStorage.getItem('emailjs_public_key') || '';
+    document.getElementById('cfgMailServiceId').value = localStorage.getItem('emailjs_service_id') || '';
+    document.getElementById('cfgMailTemplateId').value = localStorage.getItem('emailjs_template_id') || '';
+    toggleMailInputs();
+  }
+
+  window.toggleMailInputs = function() {
+    var mode = document.getElementById('cfgMailMode').value;
+    var credsArea = document.getElementById('cfgMailCredentialsArea');
+    if (mode === 'produccion') {
+      credsArea.style.display = 'block';
+    } else {
+      credsArea.style.display = 'none';
+    }
+  };
+
+  window.saveMailSettings = function() {
+    var mode = document.getElementById('cfgMailMode').value;
+    var pubKey = document.getElementById('cfgMailPublicKey').value.trim();
+    var svcId = document.getElementById('cfgMailServiceId').value.trim();
+    var tempId = document.getElementById('cfgMailTemplateId').value.trim();
+
+    if (mode === 'produccion') {
+      if (!pubKey || !svcId || !tempId) {
+        alert('Por favor, complete todos los campos de credenciales para el modo producción.');
+        return;
+      }
+    }
+
+    localStorage.setItem('email_mode', mode);
+    localStorage.setItem('emailjs_public_key', pubKey);
+    localStorage.setItem('emailjs_service_id', svcId);
+    localStorage.setItem('emailjs_template_id', tempId);
+    showToast('✅ Configuración de correo guardada con éxito.');
+  };
+
+  window.sendTestMail = function() {
+    var testEmail = document.getElementById('cfgTestEmail').value.trim();
+    if (!testEmail) {
+      alert('Por favor, ingrese un correo destinatario para la prueba.');
+      return;
+    }
+
+    showToast('📨 Enviando correo de prueba...');
+    var asunto = 'Correo de Prueba - Estacionamiento Inteligente Duoc UC';
+    var mensaje = 'Hola,\n\nEsta es una prueba de envío de correo electrónico para validar la conexión del módulo de estacionamientos de Duoc UC Maipú.\n\nSi estás leyendo esto, ¡tu integración funciona correctamente!\n\nSaludos,\nSistema de Estacionamientos Duoc UC';
+
+    window.DuocAPI.enviarCorreo(testEmail, 'Destinatario de Prueba', asunto, mensaje).then(function(res) {
+      if (res && res.success) {
+        if (res.simulated) {
+          showToast('✅ Correo de prueba simulado en pantalla.');
+        } else {
+          showToast('✅ Correo de prueba enviado con éxito vía EmailJS.');
+        }
+      } else {
+        showToast('❌ Error al enviar correo de prueba.');
+      }
+    }).catch(function(e) {
+      showToast('❌ Error: ' + e.message);
+    });
+  };
+
+  window.mostrarEmailSimulado = function(email, name, asunto, mensaje) {
+    var modal = document.getElementById('emailSimuladoModal');
+    if (modal) {
+      document.getElementById('simEmailPara').textContent = name + ' <' + email + '>';
+      document.getElementById('simEmailAsunto').textContent = asunto;
+      document.getElementById('simEmailCuerpo').textContent = mensaje;
+      modal.style.display = 'flex';
+    }
+  };
+
+  window.closeEmailSimuladoModal = function() {
+    var modal = document.getElementById('emailSimuladoModal');
+    if (modal) {
+      modal.style.display = 'none';
+    }
+  };
+
 })();
 </script>
+
+<!-- MODAL DE SIMULACIÓN DE CORREO ENVIADO -->
+<div class="modal-overlay-desktop" id="emailSimuladoModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; justify-content: center; align-items: center; background: rgba(0,0,0,0.65); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+  <div style="background: #111827; color: #f3f4f6; width: 90%; max-width: 550px; border-radius: 16px; border: 1px solid #374151; padding: 0; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column;">
+    <div style="background: #1f2937; padding: 16px 20px; border-bottom: 1px solid #374151; display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 20px;">✉️</span>
+        <strong style="color: #f3f4f6; font-size: 16px;">Simulador de Correo Electrónico</strong>
+      </div>
+      <button style="background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 18px;" onclick="closeEmailSimuladoModal()">✕</button>
+    </div>
+    <div style="padding: 20px;">
+      <div style="background: #1f2937; border-radius: 8px; padding: 12px; font-size: 13px; border: 1px solid #374151; margin-bottom: 16px; line-height: 1.5; color: #e5e7eb;">
+        <div style="margin-bottom: 6px;"><strong style="color: #9ca3af;">De:</strong> Soporte Estacionamientos Duoc UC &lt;no-reply@duocuc.cl&gt;</div>
+        <div style="margin-bottom: 6px;"><strong style="color: #9ca3af;">Para:</strong> <span id="simEmailPara" style="color: #f3f4f6;">destinatario@correo.com</span></div>
+        <div style="margin-bottom: 6px;"><strong style="color: #9ca3af;">Asunto:</strong> <span id="simEmailAsunto" style="color: #60a5fa; font-weight: 700;">Asunto de prueba</span></div>
+      </div>
+      <div style="background: #ffffff; color: #1f2937; border-radius: 8px; padding: 16px; min-height: 120px; font-family: monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; max-height: 250px; overflow-y: auto; border: 1px solid #d1d5db;" id="simEmailCuerpo">Cuerpo del correo...</div>
+      <div style="margin-top: 16px; font-size: 11px; color: #9ca3af; text-align: center; border-top: 1px dashed #374151; padding-top: 12px; line-height: 1.4;">
+        ℹ️ Para envíos reales, configura tus llaves de EmailJS en la pestaña de Ajustes de API.
+      </div>
+    </div>
+    <div style="background: #1f2937; padding: 12px 20px; text-align: right; border-top: 1px solid #374151;">
+      <button onclick="closeEmailSimuladoModal()" style="background: #003087; color: white; border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.2s; font-family: inherit;">Entendido</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
