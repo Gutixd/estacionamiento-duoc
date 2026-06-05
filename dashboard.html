@@ -314,6 +314,13 @@
     .pd-row:last-child { border-bottom: none; }
     .pd-label { font-size: 12px; color: var(--text2); }
     .pd-value { font-size: 13px; font-weight: 600; }
+    .prof-input {
+      width: 100%; box-sizing: border-box;
+      border: 1px solid var(--border); background: var(--bg);
+      color: var(--text); border-radius: 8px; padding: 10px 12px;
+      font-family: inherit; font-size: 13px; transition: border-color .15s;
+    }
+    .prof-input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0,36,84,.1); }
 
     /* ── TOAST ── */
     .toast { position: fixed; bottom: 24px; right: 24px; background: var(--blue); color:#fff; border: none; border-radius: 12px; padding: 12px 18px; font-size: 13px; font-weight: 600; z-index: 200; opacity:0; transform:translateY(8px); transition: all .25s; pointer-events:none; box-shadow: var(--shadow-lg); }
@@ -651,6 +658,7 @@
           <div class="table-header">
             <h3>📋 Mis reservas activas</h3>
             <div class="table-actions">
+              <button class="btn-sm btn-outline" onclick="exportReservasToExcel()" style="margin-right: 8px;">📥 Exportar</button>
               <button class="btn-sm btn-primary" onclick="abrirNuevaReservaForm()">+ Nueva reserva</button>
             </div>
           </div>
@@ -673,7 +681,7 @@
           <div class="table-header">
             <h3>👥 Usuarios del sistema</h3>
             <div class="table-actions">
-              <button class="btn-sm btn-outline" onclick="showToast('Exportando lista...')">📥 Exportar</button>
+              <button class="btn-sm btn-outline" onclick="exportUsuariosToExcel()">📥 Exportar</button>
             </div>
           </div>
           <table>
@@ -686,25 +694,82 @@
       <!-- ── PERFIL VIEW ── -->
       <div class="view" id="view-perfil">
         <div class="profile-grid">
-          <div class="profile-hero">
-            <div class="ph-avatar" id="phAvatar"></div>
+
+          <!-- HERO -->
+          <div class="profile-hero" style="position:relative;overflow:hidden;">
+            <div style="position:absolute;top:0;left:0;right:0;height:70px;background:linear-gradient(135deg,var(--blue),var(--accent-b));"></div>
+            <div class="ph-avatar" id="phAvatar" style="position:relative;z-index:1;border:4px solid #fff;box-shadow:var(--shadow);"></div>
             <div class="ph-name"  id="phName">–</div>
             <div class="ph-cargo" id="phCargo">–</div>
             <div class="ph-email" id="phEmail">–</div>
-            <div style="margin-top:16px">
-              <span class="badge active">✓ Sesión activa</span>
+            <div style="margin-top:14px"><span class="badge active">● Sesión activa</span></div>
+
+            <!-- Mini stats de estacionamiento -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:18px;text-align:left;">
+              <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:10px;">
+                <div style="font-size:18px;font-weight:900;color:var(--blue);" id="phEspacio">–</div>
+                <div style="font-size:10px;color:var(--text2);">Espacio asignado</div>
+              </div>
+              <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:10px;">
+                <div style="font-size:18px;font-weight:900;color:var(--text);font-family:monospace;" id="phPatente">–</div>
+                <div style="font-size:10px;color:var(--text2);">Patente</div>
+              </div>
+              <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;">
+                <div style="font-size:16px;font-weight:900;color:#047857;" id="phEntrada">–</div>
+                <div style="font-size:10px;color:var(--text2);">Hora ingreso</div>
+              </div>
+              <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:10px;">
+                <div style="font-size:16px;font-weight:900;color:#b91c1c;" id="phSalida">–</div>
+                <div style="font-size:10px;color:var(--text2);">Hora salida</div>
+              </div>
             </div>
           </div>
+
+          <!-- DETALLE / EDICIÓN -->
           <div class="profile-detail">
-            <div class="pd-row"><span class="pd-label">Nombre completo</span><span class="pd-value" id="pdName">–</span></div>
-            <div class="pd-row"><span class="pd-label">Correo</span><span class="pd-value" id="pdEmail">–</span></div>
-            <div class="pd-row"><span class="pd-label">Rol en sistema</span><span class="pd-value" id="pdRole">–</span></div>
-            <div class="pd-row"><span class="pd-label">Cargo</span><span class="pd-value" id="pdCargo">–</span></div>
-            <div class="pd-row"><span class="pd-label">Sede</span><span class="pd-value">Duoc UC Maipú</span></div>
-            <div class="pd-row"><span class="pd-label">Sesión iniciada</span><span class="pd-value" id="pdLogin">–</span></div>
-            <div style="margin-top:16px;display:flex;gap:8px;">
-              <button class="btn-sm btn-outline" onclick="showToast('Contraseña enviada al correo ✓')">Cambiar contraseña</button>
-              <button class="btn-sm btn-primary" onclick="logout()">Cerrar sesión</button>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <h3 style="font-size:15px;font-weight:800;">Información personal</h3>
+              <button class="btn-sm btn-outline" id="btnEditProfile" onclick="toggleEditProfile()">✏️ Editar</button>
+            </div>
+
+            <!-- MODO LECTURA -->
+            <div id="profileRead">
+              <div class="pd-row"><span class="pd-label">Nombre completo</span><span class="pd-value" id="pdName">–</span></div>
+              <div class="pd-row"><span class="pd-label">Correo</span><span class="pd-value" id="pdEmail">–</span></div>
+              <div class="pd-row"><span class="pd-label">Rol en sistema</span><span class="pd-value" id="pdRole">–</span></div>
+              <div class="pd-row"><span class="pd-label">Cargo</span><span class="pd-value" id="pdCargo">–</span></div>
+              <div class="pd-row"><span class="pd-label">Teléfono</span><span class="pd-value" id="pdTel">–</span></div>
+              <div class="pd-row"><span class="pd-label">Patente vehículo</span><span class="pd-value" id="pdPat">–</span></div>
+              <div class="pd-row"><span class="pd-label">Sede</span><span class="pd-value">Duoc UC Maipú</span></div>
+              <div class="pd-row"><span class="pd-label">Sesión iniciada</span><span class="pd-value" id="pdLogin">–</span></div>
+              <div style="margin-top:16px;display:flex;gap:8px;">
+                <button class="btn-sm btn-outline" onclick="showToast('Contraseña enviada al correo ✓')">Cambiar contraseña</button>
+                <button class="btn-sm btn-primary" onclick="logout()">Cerrar sesión</button>
+              </div>
+            </div>
+
+            <!-- MODO EDICIÓN -->
+            <div id="profileEdit" style="display:none;">
+              <div style="margin-bottom:12px;">
+                <label style="display:block;font-size:11px;color:var(--text2);font-weight:600;margin-bottom:4px;">Nombre completo</label>
+                <input id="edName" class="prof-input" type="text">
+              </div>
+              <div style="margin-bottom:12px;">
+                <label style="display:block;font-size:11px;color:var(--text2);font-weight:600;margin-bottom:4px;">Cargo</label>
+                <input id="edCargo" class="prof-input" type="text">
+              </div>
+              <div style="margin-bottom:12px;">
+                <label style="display:block;font-size:11px;color:var(--text2);font-weight:600;margin-bottom:4px;">Teléfono</label>
+                <input id="edTel" class="prof-input" type="text" placeholder="+56 9 ...">
+              </div>
+              <div style="margin-bottom:12px;">
+                <label style="display:block;font-size:11px;color:var(--text2);font-weight:600;margin-bottom:4px;">Patente vehículo</label>
+                <input id="edPat" class="prof-input" type="text" placeholder="ABCD12" style="text-transform:uppercase;font-family:monospace;">
+              </div>
+              <div style="margin-top:16px;display:flex;gap:8px;">
+                <button class="btn-sm btn-outline" onclick="toggleEditProfile()">Cancelar</button>
+                <button class="btn-sm btn-primary" onclick="saveProfile()">💾 Guardar cambios</button>
+              </div>
             </div>
           </div>
         </div>
@@ -1040,9 +1105,24 @@
   }
 
   /* ── PROFILE ────────────────────────────────────── */
+  function getProfileExtra() {
+    try {
+      return JSON.parse(localStorage.getItem('duoc_profile_' + auth.email)) || {};
+    } catch(e) { return {}; }
+  }
+  function setProfileExtra(obj) {
+    localStorage.setItem('duoc_profile_' + auth.email, JSON.stringify(obj));
+  }
+
   function renderPerfil() {
-    var n = auth.name, e = auth.email, r = auth.role, c = auth.cargo || '–';
     var ROLE_LABELS = { guardia:'Guardia', profesor:'Profesor / Docente', coordinacion:'Coordinación' };
+    var ex = getProfileExtra();
+    var n = ex.name || auth.name;
+    var c = ex.cargo || auth.cargo || '–';
+    var e = auth.email, r = auth.role;
+    var tel = ex.tel || '—';
+    var pat = ex.patente || '—';
+
     document.getElementById('phAvatar').innerHTML = window.personaAvatar(n, 80);
     document.getElementById('phName').textContent  = n;
     document.getElementById('phCargo').textContent = c;
@@ -1051,8 +1131,70 @@
     document.getElementById('pdEmail').textContent = e;
     document.getElementById('pdRole').textContent  = ROLE_LABELS[r] || r;
     document.getElementById('pdCargo').textContent = c;
+    document.getElementById('pdTel').textContent   = tel;
+    document.getElementById('pdPat').textContent   = pat;
     document.getElementById('pdLogin').textContent = new Date().toLocaleString('es-CL');
+
+    // Mini stats de estacionamiento
+    document.getElementById('phPatente').textContent = pat;
+    document.getElementById('phEspacio').textContent = ex.espacio || 'Sin asignar';
+    document.getElementById('phEntrada').textContent = ex.entrada || '—';
+    document.getElementById('phSalida').textContent  = ex.salida  || '—';
+
+    // Si tiene reserva activa, reflejarla
+    try {
+      if (typeof SPACES === 'object') {
+        for (var k in SPACES) {
+          var sp = SPACES[k];
+          if (sp && sp.conductor === auth.name && (sp.estado === 'reservado' || sp.estado === 'ocupado')) {
+            document.getElementById('phEspacio').textContent = 'E-' + sp.numero;
+            break;
+          }
+        }
+      }
+    } catch(e2) {}
   }
+
+  window.toggleEditProfile = function() {
+    var read = document.getElementById('profileRead');
+    var edit = document.getElementById('profileEdit');
+    var btn  = document.getElementById('btnEditProfile');
+    var isEditing = edit.style.display !== 'none';
+    if (isEditing) {
+      read.style.display = 'block'; edit.style.display = 'none';
+      btn.textContent = '✏️ Editar';
+    } else {
+      var ex = getProfileExtra();
+      document.getElementById('edName').value  = ex.name || auth.name || '';
+      document.getElementById('edCargo').value = ex.cargo || auth.cargo || '';
+      document.getElementById('edTel').value   = ex.tel || '';
+      document.getElementById('edPat').value   = ex.patente || '';
+      read.style.display = 'none'; edit.style.display = 'block';
+      btn.textContent = '✕ Cerrar';
+    }
+  };
+
+  window.saveProfile = function() {
+    var ex = getProfileExtra();
+    ex.name    = document.getElementById('edName').value.trim() || auth.name;
+    ex.cargo   = document.getElementById('edCargo').value.trim();
+    ex.tel     = document.getElementById('edTel').value.trim();
+    ex.patente = document.getElementById('edPat').value.trim().toUpperCase();
+    setProfileExtra(ex);
+
+    // Actualizar nombre en sesión y sidebar
+    auth.name = ex.name;
+    if (ex.cargo) auth.cargo = ex.cargo;
+    localStorage.setItem('duoc_auth', JSON.stringify(auth));
+    var sbName = document.getElementById('sbName');
+    if (sbName) sbName.textContent = auth.name;
+    var sbAv = document.getElementById('sbAvatar');
+    if (sbAv) sbAv.innerHTML = window.personaAvatar(auth.name, 32);
+
+    renderPerfil();
+    toggleEditProfile();
+    showToast('✅ Perfil actualizado');
+  };
 
   /* ── USERS TABLE ────────────────────────────────── */
   function fmtFecha(iso) {
@@ -2056,6 +2198,92 @@
         });
       };
     };
+  };
+
+  /* ── EXPORTACIÓN EXCEL/CSV ──────────────────────── */
+  window.exportToExcel = function(data, headers, filename) {
+    if (!data || !data.length) {
+      showToast('⚠️ No hay datos para exportar.');
+      return;
+    }
+    
+    var csvContent = "\uFEFF"; // BOM para UTF-8 (Excel requiere esto para caracteres especiales en español)
+    csvContent += headers.join(';') + '\r\n';
+    
+    data.forEach(function(row) {
+      var rowStr = headers.map(function(header) {
+        var val = row[header] !== undefined ? row[header] : '';
+        if (typeof val === 'string') {
+          val = val.replace(/"/g, '""');
+          if (val.search(/([";\n])/) !== -1) {
+            val = '"' + val + '"';
+          }
+        }
+        return val;
+      }).join(';');
+      csvContent += rowStr + '\r\n';
+    });
+    
+    var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    var link = document.createElement("a");
+    if (link.download !== undefined) {
+      var url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", filename || 'export.csv');
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  window.exportUsuariosToExcel = function() {
+    showToast('📥 Generando archivo Excel de usuarios...');
+    
+    function processAndExport(lista) {
+      var headers = ['Nombre', 'Correo', 'Rol', 'Estado', 'Ultimo Acceso'];
+      var data = lista.map(function(u) {
+        var nombre = u.name || u.nombre || '';
+        var rol = u.role || u.rol || '';
+        var activo = (u.status === 'active') || (u.activo === true) ? 'Activo' : 'Inactivo';
+        var last = u.last || fmtFecha(u.ultimo_acceso) || 'Nunca';
+        return {
+          'Nombre': nombre,
+          'Correo': u.email || '',
+          'Rol': rol.toUpperCase(),
+          'Estado': activo,
+          'Ultimo Acceso': last
+        };
+      });
+      window.exportToExcel(data, headers, 'Usuarios_Estacionamiento_DuocUC.csv');
+      showToast('✅ Excel de usuarios descargado.');
+    }
+
+    if (ONLINE) {
+      window.DuocAPI.getUsuarios().then(function(rows) {
+        processAndExport(rows && rows.length ? rows : MOCK_USERS_LIST);
+      }).catch(function(){ processAndExport(MOCK_USERS_LIST); });
+    } else {
+      processAndExport(MOCK_USERS_LIST);
+    }
+  };
+
+  window.exportReservasToExcel = function() {
+    showToast('📥 Generando archivo Excel de reservas...');
+    
+    var headers = ['Espacio', 'Sector', 'Fecha', 'Hora', 'Estado'];
+    var data = activeReservasCache.map(function(r) {
+      return {
+        'Espacio': r.espacio || '',
+        'Sector': r.sector || '',
+        'Fecha': r.fecha || '',
+        'Hora': r.hora || '',
+        'Estado': r.estado || ''
+      };
+    });
+    
+    window.exportToExcel(data, headers, 'Reservas_Estacionamiento_DuocUC.csv');
+    showToast('✅ Excel de reservas descargado.');
   };
 
 })();
