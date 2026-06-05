@@ -14,7 +14,9 @@
       "Read(//c/Program Files/**)",
       "Read(//c/Program Files \\(x86\\)/**)",
       "Read(//c/Users/diego/AppData/Roaming/**)",
-      "Bash(npm list *)"
+      "Bash(npm list *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
     ]
   }
 }

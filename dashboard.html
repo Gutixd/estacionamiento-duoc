@@ -519,6 +519,12 @@
 
       <!-- ── INICIO VIEW ── -->
       <div class="view active" id="view-inicio">
+        <!-- Header con botón de descarga -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h2 style="margin:0; font-size:18px; font-weight:800;">Dashboard en Vivo</h2>
+          <button id="btnDownloadPDF" onclick="downloadReportPDF()" style="padding:8px 16px; background:var(--blue); color:#fff; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">📥 Descargar PDF</button>
+        </div>
+
         <!-- KPIs -->
         <div class="kpi-grid">
           <div class="kpi-card">
@@ -597,35 +603,17 @@
 
       <!-- ── MAPA VIEW ── -->
       <div class="view" id="view-mapa">
-        <!-- Header con Stats y Filtros -->
-        <div class="map-header-desktop">
-          <div class="map-stats-mini">
-            <div class="stat-chip-mini" style="border-left: 3px solid var(--libre)">
-              <span style="color:var(--libre)">🟢</span>&nbsp;<strong id="m-stat-libre">0</strong>&nbsp;Libres
-            </div>
-            <div class="stat-chip-mini" style="border-left: 3px solid var(--ocupado)">
-              <span style="color:var(--ocupado)">🔴</span>&nbsp;<strong id="m-stat-ocup">0</strong>&nbsp;Ocupados
-            </div>
-            <div class="stat-chip-mini" style="border-left: 3px solid var(--res)">
-              <span style="color:var(--res)">🟡</span>&nbsp;<strong id="m-stat-res">0</strong>&nbsp;Reservados
-            </div>
-            <div class="stat-chip-mini" style="border-left: 3px solid var(--bloq)">
-              <span style="color:var(--bloq)">⚫</span>&nbsp;<strong id="m-stat-bloq">0</strong>&nbsp;Bloqueados
-            </div>
+        <!-- Mapa Real del Estacionamiento -->
+        <div style="padding: 20px;">
+          <h3 style="margin-bottom: 16px; font-weight: 800;">Plano del Estacionamiento Duoc UC Maipú</h3>
+          <div style="background: #fff; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-lg);">
+            <img src="./mapa estacionamiento.png" alt="Mapa Estacionamiento" style="width: 100%; height: auto; display: block;">
           </div>
-          <div class="filter-btn-group">
-            <button class="filter-btn active" onclick="filterMapSector('ALL', this)">Todos</button>
-            <button class="filter-btn" onclick="filterMapSector('A', this)">Sector A</button>
-            <button class="filter-btn" onclick="filterMapSector('B', this)">Sector B</button>
-            <button class="filter-btn" onclick="filterMapSector('C', this)">Sector C</button>
-            <button class="filter-btn" onclick="filterMapSector('D', this)">Sector D</button>
-          </div>
-        </div>
-
-        <!-- Lot Grid -->
-        <div class="lot-desktop">
-          <div class="lot-grid-sectors" id="lotGridSectors">
-            <!-- Sectores se generan dinámicamente -->
+          <div style="margin-top: 16px; padding: 16px; background: #f8fafc; border-radius: 12px; border-left: 3px solid var(--blue);">
+            <p style="margin: 0; font-size: 13px; color: var(--text);">
+              <strong>✓ 110 espacios totales</strong> distribuidos en 4 sectores (A, B, C, D) con circulación de doble mano.<br>
+              Los espacios se actualizan en tiempo real en la vista de Inicio.
+            </p>
           </div>
         </div>
       </div>
@@ -1973,6 +1961,74 @@
     if (modal) {
       modal.style.display = 'none';
     }
+  };
+
+  // Función para descargar reporte en PDF
+  window.downloadReportPDF = function() {
+    var content = document.getElementById('view-inicio');
+    if (!content) {
+      showToast('❌ No se puede generar el reporte');
+      return;
+    }
+
+    showToast('📄 Generando PDF...');
+
+    // Crear contenedor temporal con mejor formato
+    var tempDiv = document.createElement('div');
+    tempDiv.style.cssText = 'background:white; color:black; padding:20px; width:800px; max-height:none;';
+    tempDiv.innerHTML = '<h1 style="margin:0 0 16px 0; font-size:24px; color:#002454;">📊 Reporte de Estacionamiento</h1>' +
+      '<p style="margin:0 0 20px 0; color:#666; font-size:12px;">Generado: ' + new Date().toLocaleString('es-CL') + '</p>' +
+      '<div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:20px;">' +
+        '<div style="background:#f0f9ff; padding:12px; border-left:3px solid #10B981; border-radius:4px;">' +
+          '<div style="font-size:12px; color:#666;">LIBRES</div>' +
+          '<div style="font-size:28px; font-weight:bold; color:#10B981;">' + (document.getElementById('k-libre')?.textContent || '0') + '</div>' +
+        '</div>' +
+        '<div style="background:#fef2f2; padding:12px; border-left:3px solid #EF4444; border-radius:4px;">' +
+          '<div style="font-size:12px; color:#666;">OCUPADOS</div>' +
+          '<div style="font-size:28px; font-weight:bold; color:#EF4444;">' + (document.getElementById('k-ocup')?.textContent || '0') + '</div>' +
+        '</div>' +
+        '<div style="background:#fffbeb; padding:12px; border-left:3px solid #F59E0B; border-radius:4px;">' +
+          '<div style="font-size:12px; color:#666;">RESERVADOS</div>' +
+          '<div style="font-size:28px; font-weight:bold; color:#F59E0B;">' + (document.getElementById('k-res')?.textContent || '0') + '</div>' +
+        '</div>' +
+        '<div style="background:#f5f3ff; padding:12px; border-left:3px solid #002454; border-radius:4px;">' +
+          '<div style="font-size:12px; color:#666;">OCUPACIÓN</div>' +
+          '<div style="font-size:28px; font-weight:bold; color:#002454;">' + (document.getElementById('k-pct')?.textContent || '0%') + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="background:#f8f8f8; padding:12px; border-radius:4px; font-size:11px; color:#666; line-height:1.6;">' +
+        '<p style="margin:0 0 6px 0;"><strong style="color:#002454;">Estado del Sistema:</strong> SUPABASE Conectado (Realtime activo)</p>' +
+        '<p style="margin:0;"><strong style="color:#002454;">Total Espacios:</strong> 110 (Sectores A: 30, B: 30, C: 30, D: 20)</p>' +
+      '</div>';
+    document.body.appendChild(tempDiv);
+
+    // Usar html2canvas + jsPDF desde CDN
+    var script1 = document.createElement('script');
+    script1.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    document.head.appendChild(script1);
+
+    script1.onload = function() {
+      var script2 = document.createElement('script');
+      script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      document.head.appendChild(script2);
+
+      script2.onload = function() {
+        var jsPDF = window.jspdf.jsPDF;
+        html2canvas(tempDiv, { scale: 2, backgroundColor: '#ffffff' }).then(function(canvas) {
+          var pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+          var imgData = canvas.toDataURL('image/png');
+          var imgWidth = 190;
+          var imgHeight = (canvas.height * imgWidth) / canvas.width;
+          pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+          pdf.save('reporte_estacionamiento_' + new Date().toISOString().split('T')[0] + '.pdf');
+          document.body.removeChild(tempDiv);
+          showToast('✅ PDF descargado exitosamente');
+        }).catch(function() {
+          document.body.removeChild(tempDiv);
+          showToast('❌ Error al generar PDF');
+        });
+      };
+    };
   };
 
 })();

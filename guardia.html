@@ -1525,6 +1525,7 @@
     safe(updateStats.bind(null, true), 'updateStats');
     safe(initClock,      'initClock');
     safe(initSearch,     'initSearch');
+    safe(initNotifications, 'initNotifications');
 
     // ── Conexión Supabase: cargar datos reales + Realtime ──
     if (ONLINE) {
@@ -1559,12 +1560,30 @@
   }
 
   /* ── REALTIME: escuchar cambios de otros guardias ── */
+  /* ── WEB NOTIFICATIONS ──────────────────────────────── */
+  function initNotifications() {
+    if (!('Notification' in window)) return;
+    if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+      Notification.requestPermission();
+    }
+  }
+
+  function showNotification(title, options) {
+    if (Notification.permission === 'granted') {
+      new Notification(title, {
+        badge: './logo duocuc..png',
+        icon: './logo duocuc..png',
+        ...options
+      });
+    }
+  }
+
   function suscribirRealtime() {
     window.DuocAPI.suscribirEspacios(function(nuevo) {
       var id = nuevo.numero;
       if (!spaces[id]) return;
       var estadoLower = nuevo.estado.toLowerCase();
-      
+
       if (estadoLower === 'libre') {
         spaces[id].estado = 'libre';
         spaces[id].conductor = null;
@@ -1572,15 +1591,21 @@
         spaces[id].hora = null;
         updateSpaceEl(id);
         updateStats(false);
+        // Notificación: Espacio liberado
+        showNotification('🟢 Espacio E-' + id + ' liberado', { body: 'Sector ' + spaces[id].sector + ' disponible' });
         return;
       }
-      
+
       window.DuocAPI.getEspacioDetalle(id).then(function(detalle) {
         if (detalle) {
           spaces[id].estado = detalle.estado.toLowerCase();
           spaces[id].conductor = detalle.conductor;
           spaces[id].patente = detalle.patente;
           spaces[id].hora = new Date().toTimeString().slice(0,5);
+          // Notificación: Espacio ocupado
+          if (detalle.conductor && detalle.patente) {
+            showNotification('🔴 Espacio E-' + id + ' ocupado', { body: detalle.conductor + ' · ' + detalle.patente });
+          }
         } else {
           spaces[id].spaces = estadoLower;
         }
