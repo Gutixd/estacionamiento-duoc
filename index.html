@@ -374,9 +374,15 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="./assets/duoc-api.js"></script>
 <script>
 (function() {
   "use strict";
+
+  // Inicializar conexión Supabase (con fallback a mock local)
+  var ONLINE = false;
+  try { ONLINE = window.DuocAPI.init(); } catch(e) {}
 
   var MOCK_USERS = {
     'guardia@duocuc.cl':      { password: 'guardia123', role: 'guardia',      name: 'Roberto Silva',    cargo: 'Guardia Turno Mañana' },
@@ -428,24 +434,51 @@
     errEl.classList.remove('show');
     btn.classList.add('loading');
 
-    setTimeout(function() {
+    function fail() {
       btn.classList.remove('loading');
+      errEl.classList.add('show');
+      document.getElementById('emailInput').style.borderColor = '#ef4444';
+      document.getElementById('passwordInput').style.borderColor = '#ef4444';
+      setTimeout(function() {
+        document.getElementById('emailInput').style.borderColor = '';
+        document.getElementById('passwordInput').style.borderColor = '';
+      }, 2000);
+    }
+
+    function success(authObj) {
+      localStorage.setItem('duoc_auth', JSON.stringify(authObj));
+      redirect(authObj.role);
+    }
+
+    // 1) Intentar login real contra Supabase
+    if (ONLINE) {
+      window.DuocAPI.login(email, pass).then(function(res) {
+        if (res && res.role) {
+          success({ email: res.email, role: res.role, name: res.name, cargo: res.cargo });
+        } else if (res && res.error === 'inactivo') {
+          btn.classList.remove('loading');
+          alert('Tu cuenta está inactiva. Contacta a coordinación.');
+        } else {
+          // Fallback a mock local
+          var u = MOCK_USERS[email];
+          if (u && u.password === pass) success({ email: email, role: u.role, name: u.name, cargo: u.cargo });
+          else fail();
+        }
+      }).catch(function() {
+        var u = MOCK_USERS[email];
+        if (u && u.password === pass) success({ email: email, role: u.role, name: u.name, cargo: u.cargo });
+        else fail();
+      });
+      return;
+    }
+
+    // 2) Modo offline: mock local
+    setTimeout(function() {
       var user = MOCK_USERS[email];
       if (user && user.password === pass) {
-        localStorage.setItem('duoc_auth', JSON.stringify({
-          email: email, role: user.role, name: user.name, cargo: user.cargo
-        }));
-        redirect(user.role);
-      } else {
-        errEl.classList.add('show');
-        document.getElementById('emailInput').style.borderColor = '#ef4444';
-        document.getElementById('passwordInput').style.borderColor = '#ef4444';
-        setTimeout(function() {
-          document.getElementById('emailInput').style.borderColor = '';
-          document.getElementById('passwordInput').style.borderColor = '';
-        }, 2000);
-      }
-    }, 900);
+        success({ email: email, role: user.role, name: user.name, cargo: user.cargo });
+      } else { fail(); }
+    }, 700);
   };
 
   function redirect(role) {
@@ -471,12 +504,22 @@
     var name  = document.getElementById('reqName').value.trim();
     var cargo = document.getElementById('reqCargo').value.trim();
     if (!email || !name) { alert('Por favor completa todos los campos.'); return; }
-    // Save to pending requests
+
+    function showOk() {
+      document.getElementById('modalFormArea').style.display = 'none';
+      document.getElementById('successBox').classList.add('show');
+    }
+
+    // Guardar en Supabase (y también local como respaldo)
     var pending = JSON.parse(localStorage.getItem('duoc_pending') || '[]');
     pending.push({ email: email, name: name, cargo: cargo, fecha: new Date().toLocaleString('es-CL') });
     localStorage.setItem('duoc_pending', JSON.stringify(pending));
-    document.getElementById('modalFormArea').style.display = 'none';
-    document.getElementById('successBox').classList.add('show');
+
+    if (ONLINE) {
+      window.DuocAPI.crearSolicitud(name, email, cargo).then(showOk).catch(showOk);
+    } else {
+      showOk();
+    }
   };
 
   document.getElementById('modalOverlay').addEventListener('click', function(e) {

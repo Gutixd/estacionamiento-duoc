@@ -891,6 +891,8 @@
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="./assets/duoc-api.js"></script>
 <script>
 (function () {
   "use strict";
@@ -898,6 +900,10 @@
   /* ── AUTH CHECK ──────────────────────────────── */
   var auth = null;
   try { auth = JSON.parse(localStorage.getItem('duoc_auth')); } catch(e) {}
+
+  /* ── SUPABASE INIT ───────────────────────────── */
+  var ONLINE = false;
+  try { ONLINE = window.DuocAPI.init(); } catch(e) {}
   if (!auth) { window.location.href = './index.html'; return; }
 
   // Update header with real user info
@@ -1186,6 +1192,11 @@
     updateStats(false);
     closeSheet();
     showToast('E-' + id + ' → ' + newState.charAt(0).toUpperCase() + newState.slice(1) + ' ✓');
+
+    // Persistir en Supabase (Realtime notifica a otros clientes)
+    if (ONLINE) {
+      window.DuocAPI.cambiarEstadoEspacio(id, newState).catch(function(){});
+    }
   }
 
   /* ── RIPPLE ─────────────────────────────────────── */
@@ -1263,12 +1274,46 @@
             '<div class="sr-item"><div class="v">E-' + found.id + '</div><div class="l">Espacio</div></div>' +
             '<div class="sr-item"><div class="v">' + found.sector + '</div><div class="l">Sector</div></div>' +
             '<div class="sr-item"><div class="v">' + (found.hora||'–') + '</div><div class="l">Ingreso</div></div>' +
-          '</div>';
+          '</div>' +
+          '<div id="srVehiculo" style="margin-top:8px;font-size:11px;color:var(--text2)"></div>';
         res.classList.add('show');
-      } else if (!found || !found.conductor) {
+        // Enriquecer con API de patentes (marca/modelo/color)
+        if (ONLINE && found.patente) consultarVehiculoAPI(found.patente);
+      } else if (q.length >= 6 && ONLINE) {
+        // No está estacionado: consultar API de patentes Chile directamente
+        res.innerHTML = '<div style="text-align:center;padding:8px;color:var(--text2);font-size:13px">🔍 Consultando patente <strong>' + q + '</strong>...</div><div id="srVehiculo"></div>';
+        res.classList.add('show');
+        consultarVehiculoAPI(q, true);
+      } else {
         nf.classList.add('show');
       }
     });
+
+    // Consulta a la API de patentes (Boostr.cl / BD Duoc)
+    function consultarVehiculoAPI(patente, soloAPI) {
+      window.DuocAPI.consultarPatente(patente).then(function(r) {
+        var cont = document.getElementById('srVehiculo');
+        if (!cont) return;
+        if (r.fuente === 'no_encontrado' || !r.datos) {
+          cont.innerHTML = soloAPI
+            ? '<div class="not-found show">🔍 Patente no registrada ni encontrada en API</div>'
+            : '';
+          return;
+        }
+        var d = r.datos;
+        var badge = r.fuente === 'duoc' ? '🏫 Enrolado Duoc' : '🌐 API Chile';
+        cont.innerHTML =
+          '<div style="background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.2);border-radius:10px;padding:10px;margin-top:6px">' +
+            '<div style="font-size:10px;color:var(--accent);font-weight:700;margin-bottom:4px">' + badge + '</div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;color:var(--text)">' +
+              '<div>🚗 <strong>' + (d.marca||'—') + ' ' + (d.modelo||'') + '</strong></div>' +
+              '<div>🎨 ' + (d.color||'—') + '</div>' +
+              (d.anio ? '<div>📅 ' + d.anio + '</div>' : '') +
+              (d.tipo_acceso ? '<div>🎫 ' + d.tipo_acceso + '</div>' : '') +
+            '</div>' +
+          '</div>';
+      }).catch(function(){});
+    }
 
     clr.addEventListener('click', function(){
       inp.value = ''; clr.className = 'search-clear';
@@ -1346,12 +1391,56 @@
     safe(updateStats.bind(null, true), 'updateStats');
     safe(initClock,      'initClock');
     safe(initSearch,     'initSearch');
-    safe(startSimulation,'startSimulation');
+
+    // ── Conexión Supabase: cargar datos reales + Realtime ──
+    if (ONLINE) {
+      safe(syncDesdeBD, 'syncDesdeBD');
+      safe(suscribirRealtime, 'suscribirRealtime');
+      // Indicador visual de conexión
+      var lb = document.querySelector('.live-badge');
+      if (lb) lb.innerHTML = '<span class="live-dot"></span>SUPABASE';
+    } else {
+      // Sin conexión: usar simulación local
+      safe(startSimulation,'startSimulation');
+    }
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js').catch(function(){});
     }
   });
+
+  /* ── SINCRONIZAR ESPACIOS DESDE SUPABASE ───────── */
+  function syncDesdeBD() {
+    window.DuocAPI.getEspacios().then(function(rows) {
+      if (!rows) return;
+      rows.forEach(function(row) {
+        var id = row.numero;
+        if (spaces[id]) {
+          spaces[id].estado = row.estado.toLowerCase();
+          updateSpaceEl(id);
+        }
+      });
+      updateStats(true);
+    });
+  }
+
+  /* ── REALTIME: escuchar cambios de otros guardias ── */
+  function suscribirRealtime() {
+    window.DuocAPI.suscribirEspacios(function(nuevo) {
+      var id = nuevo.numero;
+      if (!spaces[id]) return;
+      var estadoLower = nuevo.estado.toLowerCase();
+      if (spaces[id].estado === estadoLower) return;
+      spaces[id].estado = estadoLower;
+      updateSpaceEl(id);
+      var el = document.getElementById('sp-' + id);
+      if (el) {
+        el.classList.add(estadoLower === 'libre' ? 'flash-green' : 'flash-red');
+        setTimeout(function(){ el.classList.remove('flash-green','flash-red'); }, 500);
+      }
+      updateStats(false);
+    });
+  }
 
 })();
 </script>

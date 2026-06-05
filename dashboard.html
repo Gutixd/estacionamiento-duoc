@@ -511,6 +511,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="./assets/duoc-api.js"></script>
 
 <script>
 (function() {
@@ -645,78 +646,139 @@
   }
 
   /* ── USERS TABLE ────────────────────────────────── */
-  function renderUsers() {
-    var ROLE_LABELS = { guardia:'Guardia', profesor:'Profesor', coordinacion:'Coordinación' };
-    var tbody = document.getElementById('usersBody');
-    tbody.innerHTML = '';
-    MOCK_USERS_LIST.forEach(function(u) {
-      var tr = document.createElement('tr');
-      var init = u.name.split(' ').map(function(w){return w[0];}).join('').substring(0,2);
-      tr.innerHTML = '<td><div style="display:flex;align-items:center;gap:8px"><img src="https://ui-avatars.com/api/?name=' + encodeURIComponent(u.name) + '&background=003087&color=fff&size=36&bold=true" style="width:30px;height:30px;border-radius:50%"> <strong>' + u.name + '</strong></div></td>' +
-        '<td style="color:var(--text2)">' + u.email + '</td>' +
-        '<td><span class="badge ' + u.role + '">' + (ROLE_LABELS[u.role]||u.role) + '</span></td>' +
-        '<td><span class="badge ' + u.status + '">' + (u.status==='active'?'✓ Activo':'Inactivo') + '</span></td>' +
-        '<td style="color:var(--text2)">' + u.last + '</td>' +
-        '<td><button class="action-btn" onclick="showToast(\'Correo enviado a ' + u.name + ' ✓\')">📧 Contactar</button><button class="action-btn" onclick="showToast(\'Acceso actualizado ✓\')">⚙️ Editar</button></td>';
-      tbody.appendChild(tr);
-    });
+  function fmtFecha(iso) {
+    if (!iso) return '—';
+    try { return new Date(iso).toLocaleString('es-CL', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }
+    catch(e) { return iso; }
+  }
 
-    // Pending
-    var pending = JSON.parse(localStorage.getItem('duoc_pending') || '[]');
+  function renderUsers() {
+    var ROLE_LABELS = { guardia:'Guardia', profesor:'Profesor', coordinacion:'Coordinación', jefe_seguridad:'Jefe Seguridad', directivo:'Directivo', super_admin:'Admin', conductor:'Conductor' };
+    var tbody = document.getElementById('usersBody');
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text2)">Cargando...</td></tr>';
+
+    function pintar(lista) {
+      tbody.innerHTML = '';
+      lista.forEach(function(u) {
+        var nombre = u.name || u.nombre;
+        var rol    = (u.role || u.rol || '').toLowerCase();
+        var activo = (u.status === 'active') || (u.activo === true);
+        var last   = u.last || fmtFecha(u.ultimo_acceso);
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td><div style="display:flex;align-items:center;gap:8px"><img src="https://ui-avatars.com/api/?name=' + encodeURIComponent(nombre) + '&background=003087&color=fff&size=36&bold=true" style="width:30px;height:30px;border-radius:50%"> <strong>' + nombre + '</strong></div></td>' +
+          '<td style="color:var(--text2)">' + u.email + '</td>' +
+          '<td><span class="badge ' + (rol==='profesor'?'profesor':rol==='coordinacion'?'coordinacion':'guardia') + '">' + (ROLE_LABELS[rol]||rol) + '</span></td>' +
+          '<td><span class="badge ' + (activo?'active':'inactive') + '">' + (activo?'✓ Activo':'Inactivo') + '</span></td>' +
+          '<td style="color:var(--text2)">' + last + '</td>' +
+          '<td><button class="action-btn" onclick="showToast(\'Correo enviado a ' + nombre + ' ✓\')">📧 Contactar</button><button class="action-btn" onclick="showToast(\'Acceso actualizado ✓\')">⚙️ Editar</button></td>';
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Cargar usuarios reales desde Supabase (fallback a mock)
+    if (ONLINE) {
+      window.DuocAPI.getUsuarios().then(function(rows) {
+        pintar(rows && rows.length ? rows : MOCK_USERS_LIST);
+      }).catch(function(){ pintar(MOCK_USERS_LIST); });
+    } else {
+      pintar(MOCK_USERS_LIST);
+    }
+
+    renderPending();
+  }
+
+  function renderPending() {
     var ps = document.getElementById('pendingSection');
     var pl = document.getElementById('pendingList');
-    pl.innerHTML = '';
-    if (pending.length === 0) {
-      ps.style.display = 'none';
-    } else {
+
+    function pintarP(lista, esDB) {
+      pl.innerHTML = '';
+      if (!lista || lista.length === 0) { ps.style.display = 'none'; return; }
       ps.style.display = 'block';
-      pending.forEach(function(p, i) {
+      lista.forEach(function(p, i) {
+        var nombre = p.name || p.nombre;
+        var id     = esDB ? p.id : i;
+        var fecha  = esDB ? fmtFecha(p.created_at) : p.fecha;
         var div = document.createElement('div');
         div.className = 'approval-item';
-        div.innerHTML = '<div class="ai-info"><strong>' + p.name + '</strong><span>' + p.email + ' · ' + p.cargo + ' · ' + p.fecha + '</span></div>' +
+        div.innerHTML = '<div class="ai-info"><strong>' + nombre + '</strong><span>' + p.email + ' · ' + (p.cargo||'') + ' · ' + fecha + '</span></div>' +
           '<div class="ai-actions">' +
-          '<button class="approve-btn" onclick="approveUser(' + i + ',\'' + p.name + '\')">✓ Aprobar</button>' +
-          '<button class="reject-btn"  onclick="rejectUser(' + i + ')">✕ Rechazar</button>' +
+          '<button class="approve-btn" onclick="approveUser(\'' + id + '\',\'' + nombre + '\',' + esDB + ')">✓ Aprobar</button>' +
+          '<button class="reject-btn"  onclick="rejectUser(\'' + id + '\',' + esDB + ')">✕ Rechazar</button>' +
           '</div>';
         pl.appendChild(div);
       });
     }
+
+    if (ONLINE) {
+      window.DuocAPI.getSolicitudesPendientes().then(function(rows) {
+        pintarP(rows, true);
+      }).catch(function(){ pintarP(JSON.parse(localStorage.getItem('duoc_pending')||'[]'), false); });
+    } else {
+      pintarP(JSON.parse(localStorage.getItem('duoc_pending')||'[]'), false);
+    }
   }
 
-  window.approveUser = function(i, name) {
-    var pending = JSON.parse(localStorage.getItem('duoc_pending') || '[]');
-    var user = pending[i];
-    if (!user) return;
-    // Add to mock users
-    MOCK_USERS_LIST.push({ name: user.name, email: user.email, role: 'profesor', status: 'active', last: 'Ahora' });
-    pending.splice(i, 1);
-    localStorage.setItem('duoc_pending', JSON.stringify(pending));
-    showToast('✅ Acceso aprobado para ' + name + '. Contraseña: duoc2024');
-    renderUsers();
-    buildSidebar();
+  window.approveUser = function(id, name, esDB) {
+    if (esDB && ONLINE) {
+      window.DuocAPI.aprobarSolicitud(id, 'duoc2024').then(function(res) {
+        showToast('✅ Acceso aprobado para ' + name + '. Contraseña: duoc2024');
+        renderUsers();
+        buildSidebar();
+      }).catch(function(){ showToast('Error al aprobar'); });
+    } else {
+      var pending = JSON.parse(localStorage.getItem('duoc_pending') || '[]');
+      pending.splice(parseInt(id), 1);
+      localStorage.setItem('duoc_pending', JSON.stringify(pending));
+      showToast('✅ Acceso aprobado para ' + name + '. Contraseña: duoc2024');
+      renderUsers();
+      buildSidebar();
+    }
   };
 
-  window.rejectUser = function(i) {
-    var pending = JSON.parse(localStorage.getItem('duoc_pending') || '[]');
-    pending.splice(i, 1);
-    localStorage.setItem('duoc_pending', JSON.stringify(pending));
-    showToast('Solicitud rechazada');
-    renderUsers();
+  window.rejectUser = function(id, esDB) {
+    if (esDB && ONLINE) {
+      window.DuocAPI.client().from('solicitudes_acceso')
+        .update({ estado: 'RECHAZADA' }).eq('id', id)
+        .then(function(){ showToast('Solicitud rechazada'); renderUsers(); });
+    } else {
+      var pending = JSON.parse(localStorage.getItem('duoc_pending') || '[]');
+      pending.splice(parseInt(id), 1);
+      localStorage.setItem('duoc_pending', JSON.stringify(pending));
+      showToast('Solicitud rechazada');
+      renderUsers();
+    }
   };
 
-  /* ── RESERVAS TABLE ─────────────────────────────── */
+  /* ── RESERVAS TABLE (con QR) ────────────────────── */
   function renderReservas() {
     var tbody = document.getElementById('reservasBody');
     tbody.innerHTML = '';
     MOCK_RESERVAS.forEach(function(r) {
       var tr = document.createElement('tr');
       var badgeClass = r.estado === 'activa' ? 'active' : 'pending';
+      var token = window.DuocAPI.nuevoTokenReserva(r.espacio.replace('E-',''));
+      var qrUrl = window.DuocAPI.generarQR(token, 60);
       tr.innerHTML = '<td><strong>' + r.espacio + '</strong></td><td>Sector ' + r.sector + '</td><td>' + r.fecha + '</td><td>' + r.hora + '</td>' +
         '<td><span class="badge ' + badgeClass + '">' + r.estado + '</span></td>' +
-        '<td><button class="action-btn" onclick="showToast(\'Reserva cancelada\')">✕ Cancelar</button></td>';
+        '<td><button class="action-btn" onclick="verQR(\'' + qrUrl + '\',\'' + r.espacio + '\')">📱 Ver QR</button><button class="action-btn" onclick="showToast(\'Reserva cancelada\')">✕ Cancelar</button></td>';
       tbody.appendChild(tr);
     });
   }
+
+  /* ── MODAL QR ───────────────────────────────────── */
+  window.verQR = function(url, espacio) {
+    var ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:300;display:flex;align-items:center;justify-content:center';
+    ov.onclick = function(){ ov.remove(); };
+    ov.innerHTML = '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:28px;text-align:center;max-width:300px">' +
+      '<h3 style="font-size:16px;font-weight:800;margin-bottom:6px">QR Reserva ' + espacio + '</h3>' +
+      '<p style="font-size:12px;color:var(--text2);margin-bottom:16px">El conductor presenta este código al guardia para activar la reserva</p>' +
+      '<img src="' + window.DuocAPI.generarQR(espacio + '-' + Date.now().toString(36), 200) + '" style="border-radius:12px" alt="QR">' +
+      '<p style="font-size:11px;color:var(--text3);margin-top:12px">Generado vía api.qrserver.com</p>' +
+      '</div>';
+    document.body.appendChild(ov);
+  };
 
   /* ── CLOCK ──────────────────────────────────────── */
   function initClock() {
@@ -844,20 +906,22 @@
 
     updateKPIs();
 
-    // Simulation: update charts + KPIs every 5s
-    setInterval(function() {
-      var ids = Object.keys(SPACES);
-      var id  = parseInt(ids[Math.floor(Math.random() * ids.length)]);
-      var sp  = SPACES[id];
-      if (sp.estado === 'bloqueado' || sp.estado === 'reservado') return;
-      sp.estado = sp.estado === 'libre' ? 'ocupado' : 'libre';
-      var st2 = countStats();
-      donutChartInst.data.datasets[0].data = [st2.libre, st2.ocup, st2.res, 3];
-      donutChartInst.update('none');
-      document.getElementById('k-libre').textContent = st2.libre;
-      document.getElementById('k-ocup').textContent  = st2.ocup;
-      document.getElementById('k-pct').textContent   = Math.round(st2.ocup/110*100) + '% ocupación';
-    }, 5000);
+    // Simulación local SOLO si no hay conexión a Supabase
+    if (!ONLINE) {
+      setInterval(function() {
+        var ids = Object.keys(SPACES);
+        var id  = parseInt(ids[Math.floor(Math.random() * ids.length)]);
+        var sp  = SPACES[id];
+        if (sp.estado === 'bloqueado' || sp.estado === 'reservado') return;
+        sp.estado = sp.estado === 'libre' ? 'ocupado' : 'libre';
+        var st2 = countStats();
+        donutChartInst.data.datasets[0].data = [st2.libre, st2.ocup, st2.res, 3];
+        donutChartInst.update('none');
+        document.getElementById('k-libre').textContent = st2.libre;
+        document.getElementById('k-ocup').textContent  = st2.ocup;
+        document.getElementById('k-pct').textContent   = Math.round(st2.ocup/110*100) + '% ocupación';
+      }, 5000);
+    }
   }
 
   /* ── LEAFLET MAP ────────────────────────────────── */
@@ -882,31 +946,49 @@
       .openPopup();
   }
 
-  /* ── SUPABASE REALTIME (pattern) ────────────────── */
+  /* ── SUPABASE REALTIME (conexión real) ──────────── */
+  var ONLINE = false;
+  try { ONLINE = window.DuocAPI.init(); } catch(e) {}
+
   function initSupabase() {
-    try {
-      var SUPABASE_URL = (localStorage.getItem('supabase_url') || '').trim();
-      var SUPABASE_KEY = (localStorage.getItem('supabase_key') || '').trim();
-      if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error('No config');
-      var client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      client.channel('espacios-realtime')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'espacios' }, function(payload) {
-          if (!payload.new) return;
-          var sp = payload.new;
-          if (SPACES[sp.id]) { SPACES[sp.id].estado = sp.estado; }
-          var st = countStats();
-          if (donutChartInst) {
-            donutChartInst.data.datasets[0].data = [st.libre, st.ocup, st.res, 3];
-            donutChartInst.update('none');
-          }
-          document.getElementById('k-libre').textContent = st.libre;
-          document.getElementById('k-ocup').textContent  = st.ocup;
-          showToast('🔴 Espacio E-' + sp.id + ' → ' + sp.estado);
-        })
-        .subscribe(function(s) { if(s==='SUBSCRIBED') console.log('✅ Supabase Realtime conectado'); });
-    } catch(e) {
-      console.log('ℹ️ Supabase no configurado — modo simulación activo');
+    if (!ONLINE) {
+      console.log('ℹ️ Supabase offline — modo simulación activo');
+      return;
     }
+
+    // 1) Cargar estado real de espacios
+    window.DuocAPI.getEspacios().then(function(rows) {
+      if (!rows) return;
+      rows.forEach(function(row) {
+        var id = row.numero;
+        if (SPACES[id]) SPACES[id].estado = row.estado.toLowerCase();
+      });
+      var st = countStats();
+      if (donutChartInst) {
+        donutChartInst.data.datasets[0].data = [st.libre, st.ocup, st.res, st.bloq];
+        donutChartInst.update();
+      }
+      updateKPIs();
+    });
+
+    // 2) Suscribirse a Realtime (cambios de los guardias)
+    window.DuocAPI.suscribirEspacios(function(nuevo) {
+      var id = nuevo.numero;
+      if (SPACES[id]) SPACES[id].estado = nuevo.estado.toLowerCase();
+      var st = countStats();
+      if (donutChartInst) {
+        donutChartInst.data.datasets[0].data = [st.libre, st.ocup, st.res, st.bloq];
+        donutChartInst.update('none');
+      }
+      document.getElementById('k-libre').textContent = st.libre;
+      document.getElementById('k-ocup').textContent  = st.ocup;
+      document.getElementById('k-pct').textContent   = Math.round(st.ocup/110*100) + '% ocupación';
+      showToast('🔴 E-' + id + ' → ' + nuevo.estado);
+    });
+
+    // Indicador de conexión
+    var lb = document.querySelector('.live-badge');
+    if (lb) lb.innerHTML = '<span class="live-dot"></span>SUPABASE';
   }
 
   /* ── TOAST ──────────────────────────────────────── */
@@ -928,10 +1010,13 @@
   /* ── INIT ───────────────────────────────────────── */
   buildSidebar();
   initClock();
-  initSupabase();
-  // Init charts on first view
-  setTimeout(function() { initCharts(); chartsInit = true; initMap(); mapInit = true; }, 200);
   renderPerfil();
+  // Gráficos primero, luego Supabase (para que los charts ya existan)
+  setTimeout(function() {
+    initCharts(); chartsInit = true;
+    initMap();    mapInit = true;
+    initSupabase();
+  }, 200);
 
 })();
 </script>
