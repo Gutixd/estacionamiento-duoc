@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "parking-duoc",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8765", "--directory", "C:/Users/diego/Desktop/ant-design-vue"],
+      "port": 8765
+    }
+  ]
+}

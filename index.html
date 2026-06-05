@@ -9,13 +9,14 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --blue:   #003087;
-      --blue2:  #0051d4;
-      --accent: #4f8ef7;
-      --libre:  #22c55e;
-      --text:   #1e293b;
+      --blue:   #002454;  /* Azul institucional Duoc */
+      --blue2:  #003a82;
+      --accent: #FFB81C;  /* Amarillo acento Duoc */
+      --libre:  #10B981;
+      --text:   #1E293B;
       --text2:  #64748b;
       --border: #e2e8f0;
+      --bg-base:#F4F6F8;
     }
     body { font-family: "Inter", -apple-system, sans-serif; height: 100svh; overflow: hidden; }
 
@@ -78,7 +79,7 @@
     /* RIGHT PANEL */
     .right {
       flex: 1;
-      background: #f8faff;
+      background: var(--bg-base);
       display: flex; align-items: center; justify-content: center;
       padding: 32px 24px;
       overflow-y: auto;

@@ -8,6 +8,41 @@
    4. Predicción de ocupación (local) → analítica horas pico
    ════════════════════════════════════════════════════════════════ */
 
+/* ── HELPER GLOBAL: FOTO DE PERFIL (personas imagen.png) ──────────
+   La imagen es un grid 3x2 con 6 avatares. Recortamos uno según el
+   hash del nombre para asignar una foto consistente a cada persona.
+   Inyecta la CSS base una sola vez.
+*/
+(function injectPersonaCSS() {
+  if (document.getElementById('persona-av-css')) return;
+  var st = document.createElement('style');
+  st.id = 'persona-av-css';
+  st.textContent =
+    '.persona-av{display:inline-block;vertical-align:middle;box-sizing:border-box;background-clip:padding-box;background-image:url("./personas imagen.png");' +
+    'background-size:300% 200%;background-repeat:no-repeat;background-color:#e2e8f0;}' +
+    '.persona-av.pa0{background-position:0% 0%}' +
+    '.persona-av.pa1{background-position:50% 0%}' +
+    '.persona-av.pa2{background-position:100% 0%}' +
+    '.persona-av.pa3{background-position:0% 100%}' +
+    '.persona-av.pa4{background-position:50% 100%}' +
+    '.persona-av.pa5{background-position:100% 100%}';
+  (document.head || document.documentElement).appendChild(st);
+})();
+
+window.personaIndex = function (name) {
+  var s = String(name || ''); var h = 0;
+  for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 6;
+  return h;
+};
+
+// Devuelve HTML de un avatar circular con foto de persona
+window.personaAvatar = function (name, sizePx, borderColor) {
+  var idx = window.personaIndex(name);
+  var border = borderColor ? ('border:2px solid ' + borderColor + ';') : '';
+  return '<div class="persona-av pa' + idx + '" title="' + (name||'') + '" ' +
+    'style="width:' + sizePx + 'px;height:' + sizePx + 'px;border-radius:50%;' + border + '"></div>';
+};
+
 window.DuocAPI = (function () {
   "use strict";
 

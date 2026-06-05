@@ -16,25 +16,29 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
     :root {
-      --bg:        #0a0f1e;
-      --bg2:       #111827;
-      --bg3:       #1a2236;
-      --glass:     rgba(255,255,255,0.06);
-      --glass-b:   rgba(255,255,255,0.1);
-      --blue:      #003087;
-      --accent:    #4f8ef7;
-      --accent2:   #6ba3ff;
-      --libre:     #22c55e;
-      --libre-bg:  rgba(34,197,94,0.15);
-      --ocupado:   #ef4444;
-      --ocupado-bg:rgba(239,68,68,0.15);
-      --reservado: #f59e0b;
-      --reservado-bg:rgba(245,158,11,0.15);
-      --bloqueado: #4b5563;
-      --bloqueado-bg:rgba(75,85,99,0.2);
-      --text:      #f1f5f9;
-      --text2:     #94a3b8;
-      --text3:     #475569;
+      --bg:        #F4F6F8;   /* Fondo base gris claro */
+      --bg2:       #FFFFFF;   /* Superficies */
+      --bg3:       #FFFFFF;   /* Tarjetas */
+      --bg-dark:   #002454;   /* Azul institucional (header/nav) */
+      --glass:     rgba(0,36,84,0.04);
+      --glass-b:   rgba(0,36,84,0.08);
+      --blue:      #002454;
+      --accent:    #FFB81C;   /* Amarillo Duoc */
+      --accent2:   #003a82;
+      --libre:     #10B981;
+      --libre-bg:  rgba(16,185,129,0.12);
+      --ocupado:   #EF4444;
+      --ocupado-bg:rgba(239,68,68,0.12);
+      --reservado: #F59E0B;
+      --reservado-bg:rgba(245,158,11,0.12);
+      --bloqueado: #94a3b8;
+      --bloqueado-bg:rgba(148,163,184,0.18);
+      --text:      #1E293B;
+      --text2:     #64748b;
+      --text3:     #94a3b8;
+      --border:    #e2e8f0;
+      --shadow:    0 1px 3px rgba(0,36,84,0.08), 0 1px 2px rgba(0,36,84,0.05);
+      --shadow-lg: 0 10px 30px rgba(0,36,84,0.12);
       --nav-h:     68px;
       --header-h:  56px;
     }
@@ -108,16 +112,16 @@
     }
 
     .header-title { line-height: 1.2; }
-    .header-title strong { font-size: 14px; font-weight: 700; display: block; }
-    .header-title span   { font-size: 11px; color: var(--text2); }
+    .header-title strong { font-size: 14px; font-weight: 700; display: block; color: #fff; }
+    .header-title span   { font-size: 11px; color: rgba(255,255,255,0.75); }
 
     .live-badge {
       display: flex; align-items: center; gap: 5px;
-      background: rgba(34,197,94,0.15);
-      border: 1px solid rgba(34,197,94,0.3);
+      background: rgba(16,185,129,0.25);
+      border: 1px solid rgba(16,185,129,0.5);
       border-radius: 20px;
       padding: 3px 10px;
-      font-size: 11px; font-weight: 700; color: var(--libre);
+      font-size: 11px; font-weight: 700; color: #6ee7b7;
       letter-spacing: 0.05em;
     }
 
@@ -135,7 +139,7 @@
 
     .header-right { display: flex; align-items: center; gap: 10px; }
 
-    .clock { font-size: 13px; font-weight: 600; color: var(--text2); font-variant-numeric: tabular-nums; }
+    .clock { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.9); font-variant-numeric: tabular-nums; }
 
     .avatar {
       width: 34px; height: 34px;
@@ -159,7 +163,8 @@
       gap: 8px;
       overflow-x: auto;
       scrollbar-width: none;
-      background: linear-gradient(to bottom, rgba(10,15,30,0.95), var(--bg));
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
     }
     .stats-bar::-webkit-scrollbar { display: none; }
 
@@ -181,7 +186,7 @@
     .stat-chip:nth-child(2) { animation-delay: .1s;  background: var(--ocupado-bg);   border-color: rgba(239,68,68,0.25); }
     .stat-chip:nth-child(3) { animation-delay: .15s; background: var(--reservado-bg); border-color: rgba(245,158,11,0.25); }
     .stat-chip:nth-child(4) { animation-delay: .2s;  background: var(--bloqueado-bg); border-color: rgba(75,85,99,0.3); }
-    .stat-chip:nth-child(5) { animation-delay: .25s; background: rgba(79,142,247,.1); border-color: rgba(79,142,247,0.25); }
+    .stat-chip:nth-child(5) { animation-delay: .25s; background: rgba(0,36,84,.07); border-color: rgba(0,36,84,0.18); }
 
     @keyframes chipIn {
       from { transform: translateY(16px) scale(0.85); opacity: 0; }
@@ -196,7 +201,7 @@
     .stat-chip:nth-child(2) .stat-num { color: var(--ocupado); }
     .stat-chip:nth-child(3) .stat-num { color: var(--reservado); }
     .stat-chip:nth-child(4) .stat-num { color: var(--bloqueado); }
-    .stat-chip:nth-child(5) .stat-num { color: var(--accent); }
+    .stat-chip:nth-child(5) .stat-num { color: var(--blue); }
 
     .stat-lbl { font-size: 10px; color: var(--text2); margin-top: 2px; font-weight: 500; }
 
@@ -209,12 +214,13 @@
     .search-box {
       display: flex; align-items: center; gap: 10px;
       background: var(--bg3);
-      border: 1.5px solid rgba(255,255,255,0.08);
+      border: 1.5px solid var(--border);
       border-radius: 14px;
       padding: 0 14px;
       transition: border-color .2s;
+      box-shadow: var(--shadow);
     }
-    .search-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,142,247,0.15); }
+    .search-box:focus-within { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0,36,84,0.12); }
 
     .search-icon { font-size: 16px; color: var(--text3); flex-shrink: 0; }
 
@@ -239,7 +245,8 @@
     .search-result {
       margin-top: 8px;
       background: var(--bg3);
-      border: 1px solid rgba(255,255,255,0.08);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
       border-radius: 14px;
       padding: 12px;
       display: none;
@@ -256,7 +263,7 @@
     .sr-avatar { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 2px solid var(--accent); }
     .sr-avatar img { width: 100%; height: 100%; object-fit: cover; }
     .sr-name  { font-size: 14px; font-weight: 700; }
-    .sr-plate { font-size: 12px; color: var(--accent); font-weight: 600; background: rgba(79,142,247,.1); padding: 2px 7px; border-radius: 6px; display: inline-block; }
+    .sr-plate { font-size: 12px; color: var(--blue); font-weight: 700; background: rgba(0,36,84,.08); padding: 2px 7px; border-radius: 6px; display: inline-block; }
 
     .sr-grid {
       display: grid;
@@ -290,7 +297,14 @@
 
     /* ── VIEWS ── */
     .view { display: none; padding-bottom: calc(var(--nav-h) + 16px); }
-    .view.active { display: block; }
+    .view.active {
+      display: block;
+      animation: viewFadeIn .3s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    @keyframes viewFadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
 
     /* ── PARKING MAP ── */
     .map-wrap {
@@ -305,7 +319,7 @@
 
     .occ-bar-wrap { flex: 1; margin: 0 12px; }
     .occ-bar-track {
-      height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden;
+      height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden;
     }
     .occ-bar-fill {
       height: 100%; border-radius: 3px;
@@ -322,9 +336,10 @@
 
     /* Parking lot container */
     .lot {
-      background: #0d1728;
+      background: #1a2438;
       border-radius: 16px;
-      border: 1px solid rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
       overflow: hidden;
       position: relative;
     }
@@ -397,6 +412,7 @@
     }
 
     .sp:active { transform: scale(0.92); }
+    .sp:hover { transform: scale(1.05); z-index: 5; }
 
     .sp.libre {
       background: rgba(34,197,94,0.12);
@@ -443,7 +459,8 @@
     .inc-title { font-size: 16px; font-weight: 800; margin-bottom: 12px; }
     .inc-card {
       background: var(--bg3);
-      border: 1px solid rgba(255,255,255,0.07);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
       border-radius: 14px;
       padding: 14px;
       margin-bottom: 10px;
@@ -484,7 +501,7 @@
     }
     .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
     .profile-name { font-size: 20px; font-weight: 800; }
-    .profile-role { font-size: 13px; color: var(--accent); font-weight: 500; margin-top: 2px; }
+    .profile-role { font-size: 13px; color: var(--blue); font-weight: 600; margin-top: 2px; }
     .profile-badge {
       display: inline-flex; align-items: center; gap: 5px;
       background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25);
@@ -499,18 +516,20 @@
     }
     .ps-card {
       background: var(--bg3);
-      border: 1px solid rgba(255,255,255,0.07);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
       border-radius: 12px; padding: 12px;
       text-align: center;
     }
-    .ps-val { font-size: 20px; font-weight: 900; color: var(--accent); }
+    .ps-val { font-size: 20px; font-weight: 900; color: var(--blue); }
     .ps-lbl { font-size: 10px; color: var(--text2); margin-top: 2px; }
 
     .profile-section { margin-bottom: 12px; }
     .profile-section h3 { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
     .profile-item {
       display: flex; align-items: center; justify-content: space-between;
-      background: var(--bg3); border: 1px solid rgba(255,255,255,.06);
+      background: var(--bg3); border: 1px solid var(--border);
+      box-shadow: var(--shadow);
       border-radius: 12px; padding: 12px 14px; margin-bottom: 6px;
     }
     .profile-item .pi-left { display: flex; align-items: center; gap: 10px; }
@@ -533,7 +552,7 @@
       position: fixed;
       bottom: 0; left: 0; right: 0;
       background: var(--bg2);
-      border-top: 1px solid rgba(255,255,255,0.1);
+      border-top: 1px solid var(--border);
       border-radius: 24px 24px 0 0;
       padding: 0 20px 32px;
       z-index: 51;
@@ -541,12 +560,13 @@
       transition: transform .4s cubic-bezier(0.34, 1.56, 0.64, 1);
       max-height: 85svh;
       overflow-y: auto;
+      box-shadow: 0 -8px 40px rgba(0,36,84,0.15);
     }
     .bottom-sheet.open { transform: translateY(0); }
 
     .bs-handle {
       width: 40px; height: 4px;
-      background: rgba(255,255,255,0.2);
+      background: #cbd5e1;
       border-radius: 2px;
       margin: 12px auto 20px;
     }
@@ -571,7 +591,7 @@
     .bs-close {
       width: 32px; height: 32px;
       border-radius: 50%;
-      background: rgba(255,255,255,0.08);
+      background: #f1f5f9;
       border: none; color: var(--text2);
       font-size: 18px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
@@ -584,25 +604,25 @@
       font-size: 13px; font-weight: 700;
       margin-bottom: 16px;
     }
-    .bs-status.libre     { background: var(--libre-bg);     color: var(--libre);     border: 1px solid rgba(34,197,94,.3); }
+    .bs-status.libre     { background: var(--libre-bg);     color: #047857; border: 1px solid rgba(16,185,129,.3); }
     .bs-status.ocupado   { background: var(--ocupado-bg);   color: var(--ocupado);   border: 1px solid rgba(239,68,68,.3); }
-    .bs-status.reservado { background: var(--reservado-bg); color: var(--reservado); border: 1px solid rgba(245,158,11,.3); }
-    .bs-status.bloqueado { background: var(--bloqueado-bg); color: #9ca3af;          border: 1px solid rgba(75,85,99,.3); }
+    .bs-status.reservado { background: var(--reservado-bg); color: #b45309; border: 1px solid rgba(245,158,11,.3); }
+    .bs-status.bloqueado { background: var(--bloqueado-bg); color: #64748b;          border: 1px solid rgba(148,163,184,.4); }
 
     .bs-vehicle {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
+      background: #f8fafc;
+      border: 1px solid var(--border);
       border-radius: 14px;
       padding: 14px;
       display: flex; gap: 12px; align-items: center;
       margin-bottom: 16px;
     }
-    .bsv-avatar { width: 48px; height: 48px; border-radius: 50%; overflow: hidden; border: 2px solid var(--accent); flex-shrink: 0; }
+    .bsv-avatar { width: 48px; height: 48px; border-radius: 50%; overflow: hidden; border: 2px solid var(--blue); flex-shrink: 0; }
     .bsv-avatar img { width: 100%; height: 100%; object-fit: cover; }
     .bsv-name { font-size: 15px; font-weight: 700; }
     .bsv-plate {
       display: inline-flex;
-      background: var(--bg3); border: 1px solid rgba(255,255,255,.1);
+      background: #fff; border: 1px solid var(--border);
       border-radius: 6px; padding: 2px 8px;
       font-size: 13px; font-weight: 800; font-family: monospace;
       color: var(--text); letter-spacing: .05em;
@@ -652,10 +672,11 @@
       position: fixed;
       bottom: 0; left: 0; right: 0;
       height: var(--nav-h);
-      background: rgba(17,24,39,0.95);
+      background: rgba(255,255,255,0.97);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      border-top: 1px solid rgba(255,255,255,.08);
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -2px 16px rgba(0,36,84,0.06);
       display: flex; align-items: center;
       z-index: 40;
     }
@@ -678,12 +699,12 @@
       position: absolute; top: 6px;
       width: 32px; height: 3px;
       border-radius: 2px;
-      background: var(--accent);
+      background: var(--blue);
       transform: scaleX(0);
       transition: transform .3s cubic-bezier(0.34,1.56,0.64,1);
     }
 
-    .nav-btn.active .nav-lbl  { color: var(--accent); }
+    .nav-btn.active .nav-lbl  { color: var(--blue); font-weight: 700; }
     .nav-btn.active .nav-ico  { transform: scale(1.15) translateY(-1px); }
     .nav-btn.active .nav-pill { transform: scaleX(1); }
 
@@ -691,14 +712,15 @@
     .toast {
       position: fixed;
       top: 70px; left: 50%; transform: translateX(-50%) translateY(-20px);
-      background: rgba(26,34,54,0.95);
-      border: 1px solid rgba(255,255,255,.12);
+      background: var(--blue);
+      color: #fff;
+      border: none;
       border-radius: 12px;
       padding: 10px 18px;
       font-size: 13px; font-weight: 600;
       z-index: 100;
       white-space: nowrap;
-      backdrop-filter: blur(20px);
+      box-shadow: var(--shadow-lg);
       opacity: 0;
       transition: opacity .25s, transform .25s;
       pointer-events: none;
@@ -729,9 +751,7 @@
     <div class="header-right">
       <div class="live-badge"><span class="live-dot"></span>EN VIVO</div>
       <div class="clock" id="clock">--:--:--</div>
-      <div class="avatar" id="guardiaAvatar">
-        <img src="https://ui-avatars.com/api/?name=Guardia&background=003087&color=fff&size=68&bold=true" alt="Guardia">
-      </div>
+      <div class="avatar" id="guardiaAvatar"></div>
     </div>
   </header>
 
@@ -807,9 +827,7 @@
     <div class="view" id="view-profile">
       <div class="profile-wrap">
         <div class="profile-hero">
-          <div class="profile-avatar" id="profileAvatar">
-            <img src="https://ui-avatars.com/api/?name=Guardia&background=003087&color=fff&size=160&bold=true" alt="Guardia">
-          </div>
+          <div class="profile-avatar" id="profileAvatar"></div>
           <div class="profile-name" id="profileName">–</div>
           <div class="profile-role" id="profileRole">Guardia de Estacionamiento</div>
           <div class="profile-badge"><span style="width:7px;height:7px;background:var(--libre);border-radius:50%;display:inline-block"></span>Turno activo</div>
@@ -911,7 +929,7 @@
     var nameEl = document.getElementById('guardiaName');
     var avatEl = document.getElementById('guardiaAvatar');
     if (nameEl) nameEl.textContent = auth.name || 'Guardia';
-    if (avatEl && auth.name) avatEl.innerHTML = '<img src="https://ui-avatars.com/api/?name=' + encodeURIComponent(auth.name) + '&background=003087&color=fff&size=68&bold=true" alt="">';
+    if (avatEl && auth.name) avatEl.innerHTML = window.personaAvatar(auth.name, 34);
   });
 
   function safe(fn, name) {
@@ -1079,7 +1097,7 @@
   var currentSpaceId = null;
 
   var STATE_LABELS = { libre:'🟢 Libre', ocupado:'🔴 Ocupado', reservado:'🟡 Reservado', bloqueado:'⚫ Bloqueado' };
-  var STATE_COLORS = { libre:'#22c55e', ocupado:'#ef4444', reservado:'#f59e0b', bloqueado:'#9ca3af' };
+  var STATE_COLORS = { libre:'#10B981', ocupado:'#EF4444', reservado:'#F59E0B', bloqueado:'#94a3b8' };
 
   function openSheet(id) {
     currentSpaceId = id;
@@ -1106,7 +1124,7 @@
     if (sp.conductor && (sp.estado === 'ocupado' || sp.estado === 'reservado')) {
       var initials = sp.conductor.split(' ').map(function(w){return w[0];}).join('').substring(0,2);
       veh.innerHTML = '<div class="bs-vehicle">' +
-        '<div class="bsv-avatar"><img src="https://ui-avatars.com/api/?name=' + encodeURIComponent(sp.conductor) + '&background=003087&color=fff&size=96&bold=true" alt=""></div>' +
+        window.personaAvatar(sp.conductor, 48, 'var(--blue)') +
         '<div>' +
           '<div class="bsv-name">' + sp.conductor + '</div>' +
           '<div class="bsv-plate">' + sp.patente + '</div>' +
@@ -1264,7 +1282,7 @@
       if (found && found.conductor) {
         res.innerHTML =
           '<div class="sr-header">' +
-            '<div class="sr-avatar"><img src="https://ui-avatars.com/api/?name=' + encodeURIComponent(found.conductor) + '&background=003087&color=fff&size=80&bold=true" alt=""></div>' +
+            window.personaAvatar(found.conductor, 40, 'var(--accent)') +
             '<div>' +
               '<div class="sr-name">' + found.conductor + '</div>' +
               '<span class="sr-plate">' + (found.patente||'–') + '</span>' +
@@ -1303,8 +1321,8 @@
         var d = r.datos;
         var badge = r.fuente === 'duoc' ? '🏫 Enrolado Duoc' : '🌐 API Chile';
         cont.innerHTML =
-          '<div style="background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.2);border-radius:10px;padding:10px;margin-top:6px">' +
-            '<div style="font-size:10px;color:var(--accent);font-weight:700;margin-bottom:4px">' + badge + '</div>' +
+          '<div style="background:rgba(0,36,84,.06);border:1px solid rgba(0,36,84,.15);border-radius:10px;padding:10px;margin-top:6px">' +
+            '<div style="font-size:10px;color:var(--blue);font-weight:700;margin-bottom:4px">' + badge + '</div>' +
             '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;color:var(--text)">' +
               '<div>🚗 <strong>' + (d.marca||'—') + ' ' + (d.modelo||'') + '</strong></div>' +
               '<div>🎨 ' + (d.color||'—') + '</div>' +
@@ -1382,8 +1400,8 @@
       if (nameEl)  nameEl.textContent  = auth.name || 'Guardia';
       if (pNameEl) pNameEl.textContent = auth.name || '–';
       if (pRoleEl) pRoleEl.textContent = auth.cargo || 'Guardia de Estacionamiento';
-      if (avatEl)  avatEl.innerHTML    = '<img src="https://ui-avatars.com/api/?name=' + encodeURIComponent(auth.name||'G') + '&background=003087&color=fff&size=68&bold=true" alt="">';
-      if (pAvatEl) pAvatEl.innerHTML   = '<img src="https://ui-avatars.com/api/?name=' + encodeURIComponent(auth.name||'G') + '&background=003087&color=fff&size=160&bold=true" alt="">';
+      if (avatEl)  avatEl.innerHTML    = window.personaAvatar(auth.name||'G', 34);
+      if (pAvatEl) pAvatEl.innerHTML   = window.personaAvatar(auth.name||'G', 80);
     }
 
     safe(initSpaces,     'initSpaces');

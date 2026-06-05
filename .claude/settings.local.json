@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir \"C:\\\\Users\\\\diego\\\\Desktop\\\\Pagina estacionamiento Duoc\\\\docs\")",
+      "Bash(mkdir \"C:\\\\Users\\\\diego\\\\Desktop\\\\ant-design-vue\")",
+      "Bash(mkdir -p \"C:/Users/diego/Desktop/ant-design-vue/.claude\")",
+      "Bash(mkdir -p \"C:/Users/diego/Desktop/Pagina estacionamiento Duoc/.claude\")",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(where node *)",
+      "Bash(where npx *)",
+      "Bash(where node.exe)",
+      "Bash(where python3 *)",
+      "Bash(ls /c/Users/diego/AppData/Local/Microsoft/WindowsApps/ 2>/dev/null | head -20)",
+      "Read(//c/Program Files/**)",
+      "Read(//c/Program Files \\(x86\\)/**)",
+      "Read(//c/Users/diego/AppData/Roaming/**)",
+      "Bash(npm list *)"
+    ]
+  }
+}
