@@ -464,33 +464,36 @@
     .sp:active { transform: scale(0.92); }
     .sp:hover { transform: scale(1.05); z-index: 5; }
 
+    /* Cupos con color SÓLIDO para lectura instantánea */
     .sp.libre {
-      background: rgba(34,197,94,0.12);
-      border-color: rgba(34,197,94,0.3);
+      background: #10B981;
+      border-color: #0e9f6e;
+      box-shadow: inset 0 -3px 0 rgba(0,0,0,0.12);
     }
     .sp.ocupado {
-      background: rgba(239,68,68,0.15);
-      border-color: rgba(239,68,68,0.4);
+      background: #EF4444;
+      border-color: #dc2626;
+      box-shadow: inset 0 -3px 0 rgba(0,0,0,0.15);
     }
     .sp.reservado {
-      background: rgba(245,158,11,0.12);
-      border-color: rgba(245,158,11,0.35);
+      background: #F59E0B;
+      border-color: #d97706;
+      box-shadow: inset 0 -3px 0 rgba(0,0,0,0.15);
     }
     .sp.bloqueado {
-      background: rgba(75,85,99,0.2);
-      border-color: rgba(75,85,99,0.3);
+      background: #94a3b8;
+      border-color: #64748b;
+      box-shadow: inset 0 -3px 0 rgba(0,0,0,0.12);
     }
 
     .sp-num {
-      font-size: 8px; font-weight: 800;
-      line-height: 1;
+      font-size: 9px; font-weight: 900;
+      line-height: 1; color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.25);
     }
-    .sp.libre     .sp-num { color: var(--libre); }
-    .sp.ocupado   .sp-num { color: var(--ocupado); }
-    .sp.reservado .sp-num { color: var(--reservado); }
-    .sp.bloqueado .sp-num { color: #6b7280; }
+    .sp.libre .sp-num, .sp.ocupado .sp-num, .sp.reservado .sp-num, .sp.bloqueado .sp-num { color: #fff; }
 
-    .sp-ico { font-size: 10px; margin-top: 1px; }
+    .sp-ico { font-size: 11px; margin-top: 1px; filter: drop-shadow(0 1px 1px rgba(0,0,0,.3)); }
 
     .sp.flash-green { animation: flashGreen .5s ease; }
     .sp.flash-red   { animation: flashRed   .5s ease; }
