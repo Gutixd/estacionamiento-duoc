@@ -371,6 +371,19 @@
       background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.3);
       padding: 8px 14px; border-radius: 30px; font-size: 12px; font-weight: 700; white-space: nowrap;
     }
+
+    /* ── PULIDO DE HEROES ── */
+    .prof-hero-card, .admin-hero-card { transition: box-shadow .3s ease, transform .3s ease; }
+    .prof-hero-card:hover, .admin-hero-card:hover { box-shadow: 0 16px 44px rgba(0,36,84,0.28); transform: translateY(-2px); }
+    .prof-hero-card button, .admin-hero-card button { transition: transform .15s ease, filter .15s ease; }
+    .prof-hero-card button:hover, .admin-hero-card button:hover { transform: translateY(-2px); filter: brightness(1.06); }
+    /* Brillo decorativo en la esquina del hero */
+    .prof-hero-card::after, .admin-hero-card::after {
+      content: ''; position: absolute; top: -40%; right: -10%;
+      width: 220px; height: 220px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,184,28,.30), transparent 70%);
+      pointer-events: none;
+    }
     .prof-status-pill.active { background: rgba(16,185,129,.9); border-color: transparent; }
     .prof-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
     @media (max-width: 900px) { .prof-grid { grid-template-columns: 1fr; } }
