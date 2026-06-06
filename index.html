@@ -35,10 +35,16 @@
     }
     .left-bg {
       position: absolute; inset: 0;
-      background-image: url('./foto de estacionamiento.png');
+      background-image: url('./duocfotos.webp');
       background-size: cover; background-position: center;
-      filter: brightness(0.22) saturate(0.6);
       z-index: 0;
+      animation: slowZoom 18s ease-in-out infinite alternate;
+    }
+    @keyframes slowZoom { from { transform: scale(1); } to { transform: scale(1.08); } }
+    /* Degradado azul institucional encima para legibilidad */
+    .left-bg::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(0,36,84,0.92) 0%, rgba(0,36,84,0.78) 45%, rgba(0,58,130,0.55) 100%);
     }
     .left-content { position: relative; z-index: 1; }
 
@@ -62,7 +68,7 @@
       font-size: 2.6rem; font-weight: 900; line-height: 1.15;
       margin-bottom: 16px;
     }
-    .left-headline h1 em { color: #60a5fa; font-style: normal; }
+    .left-headline h1 em { color: #FFB81C; font-style: normal; }
     .left-headline p { font-size: 15px; opacity: 0.7; max-width: 300px; line-height: 1.6; }
 
     .left-stats {
@@ -70,7 +76,7 @@
       margin-top: 40px;
     }
     .lst { color: rgba(255,255,255,0.85); }
-    .lst-num { font-size: 2rem; font-weight: 900; color: #60a5fa; display: block; }
+    .lst-num { font-size: 2rem; font-weight: 900; color: #FFB81C; display: block; }
     .lst-lbl { font-size: 11px; opacity: 0.7; letter-spacing: .05em; text-transform: uppercase; }
 
     .left-footer { position: relative; z-index: 1; }
