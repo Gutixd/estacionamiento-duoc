@@ -393,24 +393,47 @@
       overflow: hidden;
       position: relative;
     }
+    /* Etiquetas de avenidas a los lados (como el plano real) */
+    .av-label {
+      position: absolute; top: 50%; z-index: 4;
+      font-size: 8px; font-weight: 800; letter-spacing: .15em;
+      color: rgba(148,163,184,.75); white-space: nowrap;
+    }
+    .av-left  { left: -2px;  transform: translateY(-50%) rotate(-90deg); transform-origin: left center; }
+    .av-right { right: -2px; transform: translateY(-50%) rotate(90deg);  transform-origin: right center; }
+    .lot-building {
+      position: absolute; top: 30px; right: 10px; z-index: 4;
+      background: var(--blue); color: #fff;
+      font-size: 8px; font-weight: 800; letter-spacing: .04em;
+      padding: 4px 8px; border-radius: 6px; border: 1px solid #FFB81C;
+      box-shadow: 0 2px 8px rgba(0,0,0,.3);
+    }
 
     .lot-road-top, .lot-road-bottom {
-      height: 24px;
-      background: #161e35;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 11px; font-weight: 700; color: #facc15; letter-spacing: 0.3em;
+      height: 26px;
+      background: #0f1626;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      font-size: 10px; font-weight: 800; color: #facc15; letter-spacing: 0.2em;
       position: relative;
     }
-    .lot-road-top::after, .lot-road-bottom::before {
+    .lot-road-top { color: rgba(203,213,225,.85); }
+    .compass { font-size: 11px; }
+    .ent-arrow {
+      display: inline-flex; width: 18px; height: 18px; border-radius: 50%;
+      background: #FFB81C; color: #002454; align-items: center; justify-content: center;
+      font-size: 11px; animation: entPulse 1.8s ease-in-out infinite;
+    }
+    @keyframes entPulse { 0%,100%{ box-shadow: 0 0 0 0 rgba(255,184,28,.5); } 50%{ box-shadow: 0 0 0 5px rgba(255,184,28,0); } }
+    .lot-road-bottom::before, .lot-road-top::after {
       content: '';
       position: absolute;
-      left: 50%;
-      width: 2px; height: 100%;
-      background: repeating-linear-gradient(to bottom, #facc15 0, #facc15 6px, transparent 6px, transparent 12px);
-      opacity: 0.4;
+      left: 0; right: 0; bottom: 0; height: 3px;
+      background: repeating-linear-gradient(to right, #facc15 0, #facc15 12px, transparent 12px, transparent 24px);
+      opacity: 0.35;
     }
+    .lot-road-top::after { top: 0; bottom: auto; }
 
-    .lot-inner { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+    .lot-inner { padding: 10px 18px; display: flex; flex-direction: column; gap: 6px; }
 
     .sector-block { position: relative; }
 
@@ -876,9 +899,12 @@
         </div>
 
         <div class="lot">
-          <div class="lot-road-top">▲ ENTRADA</div>
+          <span class="av-label av-left">AV. PAJARITOS</span>
+          <span class="av-label av-right">AV. VESPUCIO NORTE</span>
+          <div class="lot-building">🏫 DUOC UC MAIPÚ</div>
+          <div class="lot-road-top"><span class="compass">🧭 N</span> Av. Maipú</div>
           <div class="lot-inner" id="lotInner"></div>
-          <div class="lot-road-bottom">SALIDA ▼</div>
+          <div class="lot-road-bottom"><span class="ent-arrow">⬆</span> ENTRADA / SALIDA</div>
         </div>
       </div>
     </div>
