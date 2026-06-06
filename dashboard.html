@@ -1863,21 +1863,44 @@
 
     var st = countStats();
 
+    // Plugin: texto central en el donut (minimalista)
+    var centerText = {
+      id: 'centerText',
+      afterDraw: function(chart) {
+        if (chart.config.type !== 'doughnut') return;
+        var ctx = chart.ctx;
+        var x = chart.getDatasetMeta(0).data[0].x;
+        var y = chart.getDatasetMeta(0).data[0].y;
+        var total = chart.data.datasets[0].data.reduce(function(a,b){return a+b;},0);
+        var libres = chart.data.datasets[0].data[0];
+        var pct = total ? Math.round(libres/total*100) : 0;
+        ctx.save();
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#10B981'; ctx.font = '900 26px Inter, sans-serif';
+        ctx.fillText(pct + '%', x, y - 8);
+        ctx.fillStyle = '#94a3b8'; ctx.font = '600 11px Inter, sans-serif';
+        ctx.fillText('disponible', x, y + 14);
+        ctx.restore();
+      }
+    };
+
     // DONUT
     var dCtx = document.getElementById('donutChart').getContext('2d');
     donutChartInst = new Chart(dCtx, {
       type: 'doughnut',
       data: {
         labels: ['Libres','Ocupados','Reservados','Bloqueados'],
-        datasets: [{ data: [st.libre, st.ocup, st.res, 3], backgroundColor: ['#10B981','#EF4444','#F59E0B','#94a3b8'], borderWidth: 0, hoverOffset: 6 }]
+        datasets: [{ data: [st.libre, st.ocup, st.res, 3], backgroundColor: ['#10B981','#EF4444','#F59E0B','#cbd5e1'], borderWidth: 0, borderRadius: 8, spacing: 3, hoverOffset: 8 }]
       },
       options: {
-        cutout: '68%',
+        cutout: '78%',
+        animation: { animateRotate: true, animateScale: true },
         plugins: {
           legend: { display: false },
-          tooltip: { callbacks: { label: function(c){ return ' ' + c.label + ': ' + c.raw; }}}
+          tooltip: { backgroundColor:'#002454', padding:10, cornerRadius:8, displayColors:false, callbacks: { label: function(c){ return ' ' + c.label + ': ' + c.raw; }}}
         }
-      }
+      },
+      plugins: [centerText]
     });
 
     // DONUT LEGEND
@@ -1903,22 +1926,24 @@
           label: '% Ocupación',
           data: occ,
           fill: true,
-          backgroundColor: 'rgba(0,36,84,0.10)',
+          backgroundColor: (function(){ var g=lCtx.createLinearGradient(0,0,0,260); g.addColorStop(0,'rgba(0,36,84,0.22)'); g.addColorStop(1,'rgba(0,36,84,0.01)'); return g; })(),
           borderColor: '#002454',
-          borderWidth: 2.5,
+          borderWidth: 3,
           pointBackgroundColor: '#FFB81C',
-          pointBorderColor: '#002454',
-          pointRadius: 4,
+          pointBorderColor: '#fff',
+          pointBorderWidth: 1.5,
+          pointRadius: 0,
           pointHoverRadius: 6,
-          tension: 0.4,
+          tension: 0.45,
         }]
       },
       options: {
         responsive: true, maintainAspectRatio: true,
-        plugins: { legend: { display: false } },
+        interaction: { intersect: false, mode: 'index' },
+        plugins: { legend: { display: false }, tooltip: { backgroundColor:'#002454', padding:10, cornerRadius:8, displayColors:false } },
         scales: {
-          y: { min: 0, max: 100, ticks: { callback: function(v){ return v+'%'; }}, grid: { color: 'rgba(0,0,0,0.05)' } },
-          x: { grid: { display: false } }
+          y: { min: 0, max: 100, border:{display:false}, ticks: { stepSize:25, callback: function(v){ return v+'%'; }}, grid: { color: 'rgba(0,0,0,0.04)' } },
+          x: { border:{display:false}, grid: { display: false }, ticks:{ maxRotation:0, autoSkip:true, maxTicksLimit:8 } }
         }
       }
     });
@@ -1933,16 +1958,16 @@
       data: {
         labels: sectors,
         datasets: [
-          { label:'Ocupados', data: occSec, backgroundColor: '#EF4444', borderRadius: 6, borderSkipped: false },
-          { label:'Libres',   data: totals.map(function(t,i){ return t-occSec[i]; }), backgroundColor: 'rgba(16,185,129,0.55)', borderRadius: 6, borderSkipped: false }
+          { label:'Ocupados', data: occSec, backgroundColor: '#EF4444', borderRadius: 6, borderSkipped: false, barPercentage: 0.55 },
+          { label:'Libres',   data: totals.map(function(t,i){ return t-occSec[i]; }), backgroundColor: '#10B981', borderRadius: 6, borderSkipped: false, barPercentage: 0.55 }
         ]
       },
       options: {
         responsive: true, maintainAspectRatio: true,
-        plugins: { legend: { labels: { boxWidth: 10, padding: 12, font: { size: 11 } } } },
+        plugins: { legend: { labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle:'circle', padding: 14, font: { size: 11 } } }, tooltip: { backgroundColor:'#002454', padding:10, cornerRadius:8 } },
         scales: {
-          x: { stacked: true, grid: { display: false } },
-          y: { stacked: true, grid: { color: 'rgba(0,0,0,0.05)' } }
+          x: { stacked: true, border:{display:false}, grid: { display: false } },
+          y: { stacked: true, border:{display:false}, grid: { color: 'rgba(0,0,0,0.04)' } }
         }
       }
     });
