@@ -650,6 +650,17 @@
             <div id="profHomeStatus" class="prof-status-pill">● Sin ingreso registrado</div>
           </div>
 
+          <!-- ¿Dónde dejé mi auto? -->
+          <div class="prof-panel" style="margin-bottom:14px;">
+            <div class="prof-panel-title">🔍 ¿Dónde dejé mi auto?</div>
+            <p style="font-size:12px;color:var(--text2);margin:6px 0 10px;">Ingresa tu patente y te diremos en qué sector y cupo quedó.</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <input id="findCarInput" class="prof-input" type="text" placeholder="Ej: ABCD12" maxlength="6" style="flex:1;min-width:160px;text-transform:uppercase;font-family:monospace;font-weight:800;" onkeydown="if(event.key==='Enter')buscarMiAuto()">
+              <button class="prof-btn-primary" style="width:auto;padding:10px 18px;" onclick="buscarMiAuto()">Buscar</button>
+            </div>
+            <div id="findCarResult" style="margin-top:12px;"></div>
+          </div>
+
           <div class="prof-grid">
             <!-- Disponibilidad -->
             <div class="prof-panel">
@@ -1389,6 +1400,42 @@
     if (typeof updateKPIs === 'function') updateKPIs();
     renderProfesorHome();
     showToast('✅ Ingreso registrado · Espacio E-' + (libre.numero||libre.id));
+  };
+
+  var SECTOR_NOMBRES = { A:'Sector A (Norte)', B:'Sector B (Oriente)', C:'Sector C (Poniente)', D:'Sector D (Sur)' };
+
+  window.buscarMiAuto = function() {
+    var inp = document.getElementById('findCarInput');
+    var box = document.getElementById('findCarResult');
+    var q = (inp.value || '').trim().toUpperCase();
+    if (q.length < 4) { box.innerHTML = '<div class="res-avail res-avail-warn"><span>⚠️</span><span>Ingresa una patente válida</span></div>'; return; }
+
+    var encontrado = null;
+    for (var k in SPACES) {
+      var sp = SPACES[k];
+      if (sp.patente && sp.patente.toUpperCase() === q) { encontrado = sp; break; }
+    }
+    // Coincidencia parcial si no hay exacta
+    if (!encontrado) {
+      for (var k2 in SPACES) {
+        var s2 = SPACES[k2];
+        if (s2.patente && s2.patente.toUpperCase().indexOf(q) !== -1) { encontrado = s2; break; }
+      }
+    }
+
+    if (encontrado) {
+      var sector = SECTOR_NOMBRES[encontrado.sector] || ('Sector ' + encontrado.sector);
+      var estadoTxt = encontrado.estado === 'reservado' ? 'Reservado' : 'Estacionado';
+      box.innerHTML =
+        '<div class="res-avail res-avail-ok" style="align-items:flex-start;">' +
+          '<span style="font-size:22px;">🚗</span>' +
+          '<span>Tu auto <strong>' + q + '</strong> está en:<br>' +
+          '<span style="font-size:16px;font-weight:900;">' + sector + ' · Cupo ' + (encontrado.numero || encontrado.id) + '</span><br>' +
+          '<span style="font-weight:600;opacity:.85;">' + estadoTxt + (encontrado.hora ? ' desde las ' + encontrado.hora : '') + '</span></span>' +
+        '</div>';
+    } else {
+      box.innerHTML = '<div class="res-avail res-avail-bad"><span>🔎</span><span>No encontramos un vehículo con la patente <strong>' + q + '</strong> estacionado ahora.</span></div>';
+    }
   };
 
   window.profesorRegistrarSalida = function() {
