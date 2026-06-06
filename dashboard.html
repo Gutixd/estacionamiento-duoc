@@ -558,6 +558,15 @@
     .form-input-desktop:focus {
       border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0,36,84,0.1); background: #fff;
     }
+    .res-avail {
+      display: flex; align-items: center; gap: 8px;
+      padding: 11px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 700;
+      margin-bottom: 14px; transition: all .25s; border: 1px solid transparent;
+      animation: cardIn .3s ease both;
+    }
+    .res-avail-ok   { background: rgba(16,185,129,.12); color: #047857; border-color: rgba(16,185,129,.35); }
+    .res-avail-bad  { background: rgba(239,68,68,.10);  color: #b91c1c; border-color: rgba(239,68,68,.35); }
+    .res-avail-warn { background: rgba(245,158,11,.12); color: #b45309; border-color: rgba(245,158,11,.35); }
   </style>
 </head>
 <body>
@@ -1001,18 +1010,25 @@
       </div>
       <div class="form-group-desktop">
         <label class="form-label-desktop">Fecha</label>
-        <input class="form-input-desktop" id="resFecha" type="date" required>
+        <input class="form-input-desktop" id="resFecha" type="date" required onchange="checkResAvailability()">
       </div>
       <div style="display:flex; gap:12px;">
         <div class="form-group-desktop" style="flex:1;">
           <label class="form-label-desktop">Hora Inicio</label>
-          <input class="form-input-desktop" id="resHoraInicio" type="time" required value="08:00">
+          <input class="form-input-desktop" id="resHoraInicio" type="time" required value="08:00" onchange="checkResAvailability()">
         </div>
         <div class="form-group-desktop" style="flex:1;">
           <label class="form-label-desktop">Hora Fin</label>
-          <input class="form-input-desktop" id="resHoraFin" type="time" required value="12:00">
+          <input class="form-input-desktop" id="resHoraFin" type="time" required value="12:00" onchange="checkResAvailability()">
         </div>
       </div>
+
+      <!-- Indicador de disponibilidad con colores -->
+      <div id="resAvailability" class="res-avail res-avail-ok">
+        <span id="resAvailIcon">✅</span>
+        <span id="resAvailText">Selecciona espacio y horario para verificar disponibilidad</span>
+      </div>
+
       <div class="form-group-desktop">
         <label class="form-label-desktop">Patente del Vehículo</label>
         <input class="form-input-desktop" id="resPatente" type="text" placeholder="Ej: GHJK12" required maxlength="6" style="text-transform:uppercase;">
@@ -1991,6 +2007,47 @@
     if (val && SPACES[val]) {
       document.getElementById('resSector').value = 'Sector ' + SPACES[val].sector;
     }
+    checkResAvailability();
+  };
+
+  function getResEspacioId() {
+    var inputEl = document.getElementById('resEspacioInput');
+    if (inputEl && inputEl.style.display !== 'none' && inputEl.value) {
+      return String(inputEl.value).replace(/\D/g,'');
+    }
+    return document.getElementById('resEspacioSelect').value;
+  }
+
+  window.checkResAvailability = function() {
+    var box  = document.getElementById('resAvailability');
+    var icon = document.getElementById('resAvailIcon');
+    var txt  = document.getElementById('resAvailText');
+    var btn  = document.querySelector('#reservaForm button[type="submit"]');
+    if (!box) return;
+
+    function set(cls, ic, message, disable) {
+      box.className = 'res-avail ' + cls;
+      icon.textContent = ic;
+      txt.textContent = message;
+      if (btn) { btn.disabled = !!disable; btn.style.opacity = disable ? '.5' : '1'; btn.style.cursor = disable ? 'not-allowed' : 'pointer'; }
+    }
+
+    var id = getResEspacioId();
+    var ini = document.getElementById('resHoraInicio').value;
+    var fin = document.getElementById('resHoraFin').value;
+    var fecha = document.getElementById('resFecha').value;
+
+    if (!id || !SPACES[id]) { return set('res-avail-warn','⚠️','Selecciona un espacio para verificar', true); }
+    if (!fecha || !ini || !fin) { return set('res-avail-warn','⚠️','Completa fecha y horario', true); }
+    if (fin <= ini) { return set('res-avail-bad','⛔','La hora de fin debe ser mayor a la de inicio', true); }
+
+    var sp = SPACES[id];
+    if (sp.estado === 'ocupado')   { return set('res-avail-bad','🔴','Espacio E-' + id + ' OCUPADO · no disponible', true); }
+    if (sp.estado === 'bloqueado') { return set('res-avail-bad','⛔','Espacio E-' + id + ' BLOQUEADO · no disponible', true); }
+    if (sp.estado === 'reservado') { return set('res-avail-warn','🟡','Espacio E-' + id + ' ya tiene una RESERVA activa', true); }
+
+    // Libre → disponible
+    set('res-avail-ok','✅','¡Espacio E-' + id + ' DISPONIBLE de ' + ini + ' a ' + fin + '!', false);
   };
 
   window.abrirNuevaReservaForm = function(preselectedSpaceId) {
@@ -2033,6 +2090,7 @@
     }
     
     document.getElementById('reservaModal').classList.add('open');
+    checkResAvailability();
   };
 
   window.closeReservaModal = function() {

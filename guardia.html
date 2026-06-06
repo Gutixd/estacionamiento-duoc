@@ -856,6 +856,15 @@
           <span class="occ-pct" id="occPct">0%</span>
         </div>
 
+        <!-- Sector filter chips -->
+        <div class="filter-bar">
+          <button class="filter-chip active" onclick="filterSector('ALL', this)">Todos</button>
+          <button class="filter-chip" onclick="filterSector('A', this)">Sector A</button>
+          <button class="filter-chip" onclick="filterSector('B', this)">Sector B</button>
+          <button class="filter-chip" onclick="filterSector('C', this)">Sector C</button>
+          <button class="filter-chip" onclick="filterSector('D', this)">Sector D</button>
+        </div>
+
         <div class="map-legend">
           <div class="legend-item"><div class="legend-dot" style="background:var(--libre)"></div>Libre</div>
           <div class="legend-item"><div class="legend-dot" style="background:var(--ocupado)"></div>Ocupado</div>
@@ -1131,19 +1140,38 @@
 
   /* ── PARKING MAP ────────────────────────────────── */
   var ICONS = { libre:'', ocupado:'🚗', reservado:'📋', bloqueado:'🔒' };
+  var currentFilterSector = 'ALL';
+
+  window.filterSector = function(sector, btn) {
+    currentFilterSector = sector;
+    document.querySelectorAll('.filter-chip').forEach(function(c) {
+      c.classList.remove('active');
+    });
+    if (btn) {
+      btn.classList.add('active');
+    }
+    buildMap();
+  };
 
   function buildMap() {
     var lot = document.getElementById('lotInner');
     lot.innerHTML = '';
 
     var sectors = [
-      { label:'SECTOR A', rows:[[1,15],[16,30]] },
-      { label:'SECTOR B', rows:[[31,45],[46,60]] },
-      { label:'SECTOR C', rows:[[61,75],[76,90]] },
-      { label:'SECTOR D', rows:[[91,110]] },
+      { id:'A', label:'SECTOR A', rows:[[1,15],[16,30]] },
+      { id:'B', label:'SECTOR B', rows:[[31,45],[46,60]] },
+      { id:'C', label:'SECTOR C', rows:[[61,75],[76,90]] },
+      { id:'D', label:'SECTOR D', rows:[[91,110]] },
     ];
 
-    sectors.forEach(function(sec) {
+    var filteredSectors = sectors;
+    if (currentFilterSector !== 'ALL') {
+      filteredSectors = sectors.filter(function(sec) {
+        return sec.id === currentFilterSector;
+      });
+    }
+
+    filteredSectors.forEach(function(sec) {
       var block = document.createElement('div');
       block.className = 'sector-block';
 
