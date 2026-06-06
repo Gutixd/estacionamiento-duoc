@@ -486,9 +486,23 @@
       animation: fadeSlide .3s ease both;
     }
     .inc-icon { font-size: 20px; flex-shrink: 0; }
-    .inc-body h4 { font-size: 13px; font-weight: 700; }
+    .inc-body { flex: 1; min-width: 0; }
+    .inc-body h4 { font-size: 14px; font-weight: 700; }
     .inc-body p  { font-size: 12px; color: var(--text2); margin-top: 2px; }
-    .inc-time    { font-size: 10px; color: var(--text3); margin-top: 4px; }
+    .inc-time    { font-size: 11px; color: var(--text3); margin-top: 5px; font-weight: 500; }
+
+    /* Tarjetas de historial (en vivo) */
+    .hist-card {
+      transition: transform .2s cubic-bezier(0.34,1.56,0.64,1), box-shadow .2s ease;
+      align-items: center;
+    }
+    .hist-card:active { transform: scale(0.98); }
+    .hist-card:hover { transform: translateX(3px); box-shadow: var(--shadow-lg); }
+    .hist-plate {
+      display: inline-block; font-family: monospace; font-weight: 800;
+      font-size: 11px; letter-spacing: .04em; color: var(--blue);
+      background: rgba(0,36,84,.07); padding: 1px 6px; border-radius: 5px;
+    }
 
     .btn-report {
       width: 100%; padding: 14px;
@@ -1079,6 +1093,8 @@
     document.getElementById('s-pct').textContent    = pct + '%';
     document.getElementById('occPct').textContent   = pct + '%';
     document.getElementById('occBar').style.width   = pct + '%';
+    // Mantener historial sincronizado con cada cambio
+    if (typeof renderHistory === 'function') renderHistory();
   }
 
   /* ── PARKING MAP ────────────────────────────────── */
@@ -1459,14 +1475,43 @@
 
   function renderHistory() {
     var list = document.getElementById('historyList');
-    if (!list || list.children.length > 0) return;
-    var occ = Object.values(spaces).filter(function(s){ return s.estado==='ocupado' && s.conductor; });
-    occ.slice(0,8).forEach(function(sp){
-      var d = document.createElement('div');
-      d.className = 'inc-card';
-      d.innerHTML = '<div class="inc-icon">🚗</div><div class="inc-body"><h4>' + sp.conductor + '</h4><p>Patente ' + sp.patente + ' · Espacio E-' + sp.id + ' (Sector ' + sp.sector + ')</p><div class="inc-time">Ingresó ' + (sp.hora||'?') + '</div></div>';
-      list.appendChild(d);
+    if (!list) return;
+
+    // Mostrar ingresos (ocupados) y reservas activas, ordenados por hora desc
+    var items = Object.values(spaces).filter(function(s){
+      return (s.estado === 'ocupado' || s.estado === 'reservado') && s.conductor;
     });
+    items.sort(function(a,b){ return (b.hora||'').localeCompare(a.hora||''); });
+
+    if (items.length === 0) {
+      list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text2);font-size:13px;">Sin movimientos registrados hoy</div>';
+      return;
+    }
+
+    var ahora = new Date().toTimeString().slice(0,5);
+    list.innerHTML = items.slice(0, 12).map(function(sp){
+      var esReserva = sp.estado === 'reservado';
+      var hora = sp.hora || ahora;
+      var icono = esReserva ? '📋' : '🚗';
+      var accion = esReserva ? 'Reservó' : 'Ingresó';
+      var badgeColor = esReserva ? 'var(--reservado)' : 'var(--libre)';
+      var badgeBg = esReserva ? 'var(--reservado-bg)' : 'var(--libre-bg)';
+      var badgeTxt = esReserva ? 'RESERVA' : 'INGRESO';
+      return '' +
+        '<div class="inc-card hist-card">' +
+          window.personaAvatar(sp.conductor, 42, badgeColor) +
+          '<div class="inc-body">' +
+            '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
+              '<h4 style="margin:0;">' + sp.conductor + '</h4>' +
+              '<span style="font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px;background:' + badgeBg + ';color:' + badgeColor + ';letter-spacing:.04em;">' + badgeTxt + '</span>' +
+            '</div>' +
+            '<p style="margin:3px 0 0;">' +
+              '<span class="hist-plate">' + (sp.patente||'—') + '</span> · Espacio E-' + sp.id + ' · Sector ' + sp.sector +
+            '</p>' +
+            '<div class="inc-time">' + icono + ' ' + accion + ' a las ' + hora + '</div>' +
+          '</div>' +
+        '</div>';
+    }).join('');
   }
 
   /* ── SIMULATION ────────────────────────────────── */
