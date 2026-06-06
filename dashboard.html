@@ -358,10 +358,14 @@
 
     /* ── PANEL PROFESOR ── */
     .prof-hero-card {
-      background: linear-gradient(135deg, var(--blue), var(--accent-b));
-      color: #fff; border-radius: 18px; padding: 22px 24px; margin-bottom: 16px;
+      position: relative;
+      background-image: linear-gradient(135deg, rgba(0,36,84,0.9), rgba(0,58,130,0.6)), url('./duocfotoestablecimiento.jpg');
+      background-size: cover;
+      background-position: center;
+      color: #fff; border-radius: 18px; padding: 24px; margin-bottom: 16px;
       display: flex; align-items: center; justify-content: space-between; gap: 12px;
       box-shadow: var(--shadow-lg); animation: cardIn .4s ease both; flex-wrap: wrap;
+      overflow: hidden;
     }
     .prof-status-pill {
       background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.3);
@@ -667,10 +671,14 @@
 
         <!-- ══ DASHBOARD ADMIN (coordinación) ══ -->
         <div id="adminHome">
-        <!-- Header con botón de descarga -->
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-          <h2 style="margin:0; font-size:18px; font-weight:800;">Dashboard en Vivo</h2>
-          <button id="btnDownloadPDF" onclick="downloadReportPDF()" style="padding:8px 16px; background:var(--blue); color:#fff; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">📥 Descargar PDF</button>
+        <!-- Hero card premium con foto del establecimiento -->
+        <div class="admin-hero-card" style="position: relative; background-image: linear-gradient(135deg, rgba(0,36,84,0.92), rgba(0,58,130,0.65)), url('./duocfotoestablecimiento.jpg'); background-size: cover; background-position: center; color: #fff; border-radius: 18px; padding: 24px; margin-bottom: 20px; box-shadow: var(--shadow-lg); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <div style="font-size: 11px; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: #facc15;">Coordinación General</div>
+            <h1 style="font-size: 22px; font-weight: 900; margin: 4px 0 0 0; line-height: 1.2;">Estacionamiento Sede Maipú</h1>
+            <p style="font-size: 12px; opacity: 0.85; margin: 4px 0 0 0;">Control de flujo, monitoreo en tiempo real y administración de accesos</p>
+          </div>
+          <button id="btnDownloadPDF" onclick="downloadReportPDF()" style="padding: 10px 20px; background: #FFB81C; color: #002454; border: none; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(255,184,28,0.25); font-family: inherit;">📥 Descargar Reporte PDF</button>
         </div>
 
         <!-- KPIs -->
@@ -732,7 +740,7 @@
             <div class="chart-header">
               <div>
                 <div class="chart-title">Mapa del campus</div>
-                <div class="chart-sub">Duoc UC Maipú · Av. Santa Julia 1759</div>
+                <div class="chart-sub">Duoc UC Sede Maipú · Av. Américo Vespucio 001, Maipú</div>
               </div>
             </div>
             <div id="mapContainer"></div>
@@ -1850,7 +1858,7 @@
   /* ── LEAFLET MAP ────────────────────────────────── */
   function initMap() {
     var map = L.map('mapContainer', { zoomControl: true, scrollWheelZoom: false })
-      .setView([-33.5064, -70.7264], 16);
+      .setView([-33.51686, -70.75997], 16);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
@@ -1863,9 +1871,9 @@
       className: '', iconSize: [36, 36], iconAnchor: [18, 18]
     });
 
-    L.marker([-33.5064, -70.7264], { icon: parkIcon })
+    L.marker([-33.51686, -70.75997], { icon: parkIcon })
       .addTo(map)
-      .bindPopup('<strong>Duoc UC Maipú</strong><br>Estacionamiento · 110 espacios<br>Av. Santa Julia 1759')
+      .bindPopup('<strong>Duoc UC Sede Maipú</strong><br>Estacionamiento · 110 espacios<br>Av. Américo Vespucio 001, Maipú')
       .openPopup();
   }
 
