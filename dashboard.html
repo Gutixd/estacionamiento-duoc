@@ -356,6 +356,58 @@
     }
     .prof-input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0,36,84,.1); }
 
+    /* ── PANEL PROFESOR ── */
+    .prof-hero-card {
+      background: linear-gradient(135deg, var(--blue), var(--accent-b));
+      color: #fff; border-radius: 18px; padding: 22px 24px; margin-bottom: 16px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      box-shadow: var(--shadow-lg); animation: cardIn .4s ease both; flex-wrap: wrap;
+    }
+    .prof-status-pill {
+      background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.3);
+      padding: 8px 14px; border-radius: 30px; font-size: 12px; font-weight: 700; white-space: nowrap;
+    }
+    .prof-status-pill.active { background: rgba(16,185,129,.9); border-color: transparent; }
+    .prof-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    @media (max-width: 900px) { .prof-grid { grid-template-columns: 1fr; } }
+    .prof-panel {
+      background: var(--bg3); border: 1px solid var(--border); border-radius: 16px;
+      padding: 18px; box-shadow: var(--shadow); animation: cardIn .4s ease both;
+      transition: transform .25s cubic-bezier(0.16,1,0.3,1), box-shadow .25s;
+    }
+    .prof-panel:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+    .prof-panel-title { font-size: 14px; font-weight: 800; }
+    .prof-bar { height: 8px; background: #e2e8f0; border-radius: 5px; overflow: hidden; margin-top: 12px; }
+    .prof-bar-fill { height: 100%; background: linear-gradient(90deg, var(--libre), #34d399); width: 0%; transition: width .6s cubic-bezier(0.16,1,0.3,1); }
+    .prof-btn-primary {
+      width: 100%; padding: 12px; border: none; border-radius: 10px; cursor: pointer;
+      background: var(--blue); color: #fff; font-weight: 700; font-size: 13px; font-family: inherit;
+      transition: transform .15s, background .18s;
+    }
+    .prof-btn-primary:hover { background: var(--accent-b); transform: translateY(-1px); }
+    .prof-btn-primary:active { transform: scale(.97); }
+    .prof-btn-outline {
+      width: 100%; padding: 11px; border: 1px solid var(--ocupado); border-radius: 10px; cursor: pointer;
+      background: #fff; color: var(--ocupado); font-weight: 700; font-size: 13px; font-family: inherit;
+    }
+    .prof-quick {
+      display: block; width: 100%; text-align: left; margin-top: 8px;
+      padding: 11px 14px; border: 1px solid var(--border); border-radius: 10px;
+      background: var(--bg); color: var(--text); font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: all .18s;
+    }
+    .prof-quick:hover { border-color: var(--blue); background: #f0f4fa; padding-left: 18px; }
+
+    /* Cambiar foto en perfil */
+    .avatar-edit-wrap { position: relative; width: 80px; margin: 0 auto 12px; cursor: pointer; }
+    .avatar-edit-wrap .ph-avatar { margin: 0; }
+    .avatar-edit-overlay {
+      position: absolute; inset: 0; border-radius: 50%; background: rgba(0,36,84,.6);
+      color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity .2s; text-align: center; z-index: 2;
+    }
+    .avatar-edit-wrap:hover .avatar-edit-overlay { opacity: 1; }
+
     /* ── TOAST ── */
     .toast { position: fixed; bottom: 24px; right: 24px; background: var(--blue); color:#fff; border: none; border-radius: 12px; padding: 12px 18px; font-size: 13px; font-weight: 600; z-index: 200; opacity:0; transform:translateY(8px); transition: all .25s; pointer-events:none; box-shadow: var(--shadow-lg); }
     .toast.show { opacity:1; transform:translateY(0); }
@@ -560,6 +612,52 @@
 
       <!-- ── INICIO VIEW ── -->
       <div class="view active" id="view-inicio">
+
+        <!-- ══ PANEL PROFESOR (solo rol profesor) ══ -->
+        <div id="profesorHome" style="display:none;">
+          <div class="prof-hero-card">
+            <div>
+              <div style="font-size:13px;opacity:.9;">Bienvenido,</div>
+              <div id="profHomeName" style="font-size:24px;font-weight:900;line-height:1.1;">Profesor</div>
+              <div id="profHomeDate" style="font-size:12px;opacity:.85;margin-top:4px;"></div>
+            </div>
+            <div id="profHomeStatus" class="prof-status-pill">● Sin ingreso registrado</div>
+          </div>
+
+          <div class="prof-grid">
+            <!-- Disponibilidad -->
+            <div class="prof-panel">
+              <div class="prof-panel-title">🅿️ Disponibilidad ahora</div>
+              <div style="display:flex;align-items:center;gap:14px;margin-top:8px;">
+                <div style="font-size:40px;font-weight:900;color:var(--libre);" id="profLibres">0</div>
+                <div style="font-size:12px;color:var(--text2);line-height:1.4;">espacios<br>libres de 110</div>
+              </div>
+              <div class="prof-bar"><div class="prof-bar-fill" id="profBarFill"></div></div>
+              <div style="font-size:11px;color:var(--text2);margin-top:6px;" id="profOcupTxt">— % ocupación</div>
+            </div>
+
+            <!-- Registrar ingreso -->
+            <div class="prof-panel">
+              <div class="prof-panel-title">🚗 Registrar mi ingreso</div>
+              <p style="font-size:12px;color:var(--text2);margin:6px 0 10px;">Al ingresar se asigna un espacio y el guardia lo verá al instante.</p>
+              <label style="font-size:11px;font-weight:700;color:var(--text2);">Patente</label>
+              <input id="profPatente" class="prof-input" type="text" placeholder="ABCD12" maxlength="6" style="text-transform:uppercase;font-family:monospace;font-weight:800;margin:4px 0 10px;">
+              <button class="prof-btn-primary" id="profEntrarBtn" onclick="profesorRegistrarIngreso()">Registrar ingreso ahora</button>
+              <button class="prof-btn-outline" id="profSalirBtn" onclick="profesorRegistrarSalida()" style="display:none;margin-top:8px;">Registrar salida</button>
+            </div>
+
+            <!-- Acceso rápido -->
+            <div class="prof-panel">
+              <div class="prof-panel-title">⚡ Acceso rápido</div>
+              <button class="prof-quick" onclick="document.querySelector('[data-view=mapa]').click()">🗺️ Ver mapa de espacios</button>
+              <button class="prof-quick" onclick="document.querySelector('[data-view=reservas]').click()">📋 Mis reservas</button>
+              <button class="prof-quick" onclick="document.querySelector('[data-view=perfil]').click()">👤 Mi perfil</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ DASHBOARD ADMIN (coordinación) ══ -->
+        <div id="adminHome">
         <!-- Header con botón de descarga -->
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
           <h2 style="margin:0; font-size:18px; font-weight:800;">Dashboard en Vivo</h2>
@@ -640,6 +738,7 @@
             <canvas id="barChart" height="200"></canvas>
           </div>
         </div>
+        </div><!-- /adminHome -->
       </div>
 
       <!-- ── MAPA VIEW ── -->
@@ -732,7 +831,11 @@
           <!-- HERO -->
           <div class="profile-hero" style="position:relative;overflow:hidden;">
             <div style="position:absolute;top:0;left:0;right:0;height:70px;background:linear-gradient(135deg,var(--blue),var(--accent-b));"></div>
-            <div class="ph-avatar" id="phAvatar" style="position:relative;z-index:1;border:4px solid #fff;box-shadow:var(--shadow);"></div>
+            <div class="avatar-edit-wrap" style="z-index:1;" onclick="document.getElementById('photoInput').click()">
+              <div class="ph-avatar" id="phAvatar" style="border:4px solid #fff;box-shadow:var(--shadow);"></div>
+              <div class="avatar-edit-overlay">📷<br>Cambiar</div>
+            </div>
+            <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="changeProfilePhoto(event)">
             <div class="ph-name"  id="phName">–</div>
             <div class="ph-cargo" id="phCargo">–</div>
             <div class="ph-email" id="phEmail">–</div>
@@ -1127,7 +1230,7 @@
     document.getElementById('sbName').textContent  = auth.name;
     document.getElementById('sbEmail').textContent = auth.email;
     var init = auth.name.split(' ').map(function(w){return w[0];}).join('').substring(0,2);
-    document.getElementById('sbAvatar').innerHTML  = window.personaAvatar(auth.name, 32);
+    document.getElementById('sbAvatar').innerHTML  = userAvatarHTML(32);
 
     nav.innerHTML = '<div class="nav-section-label">Navegación</div>';
     items.forEach(function(item) {
@@ -1154,18 +1257,139 @@
     if (v) v.classList.add('active');
     if (btn) btn.classList.add('active');
 
-    var TITLES = { inicio:'Dashboard', mapa:'Mapa de espacios', reservas:'Reservas', usuarios:'Gestión de usuarios', perfil:'Mi perfil', config:'Ajustes de API' };
+    var TITLES = { inicio: (auth.role === 'profesor' ? 'Inicio' : 'Dashboard'), mapa:'Mapa de espacios', reservas:'Reservas', usuarios:'Gestión de usuarios', perfil:'Mi perfil', config:'Ajustes de API' };
     document.getElementById('pageTitle').textContent = TITLES[name] || name;
     document.getElementById('pageBreadcrumb').textContent = 'Inicio → ' + (TITLES[name] || name);
 
-    if (name === 'inicio' && !chartsInit) { chartsInit = true; initCharts(); }
-    if (name === 'inicio' && !mapInit) { mapInit = true; setTimeout(initMap, 100); }
+    if (name === 'inicio') {
+      var esProfesor = (auth.role === 'profesor');
+      document.getElementById('profesorHome').style.display = esProfesor ? 'block' : 'none';
+      document.getElementById('adminHome').style.display    = esProfesor ? 'none' : 'block';
+      if (esProfesor) { renderProfesorHome(); }
+      else {
+        if (!chartsInit) { chartsInit = true; initCharts(); }
+        if (!mapInit) { mapInit = true; setTimeout(initMap, 100); }
+      }
+    }
     if (name === 'mapa') buildDesktopMap();
     if (name === 'usuarios') renderUsers();
     if (name === 'reservas') renderReservas();
     if (name === 'perfil') renderPerfil();
     if (name === 'config') initConfigView();
   }
+
+  /* ── PANEL PROFESOR ─────────────────────────────── */
+  function renderProfesorHome() {
+    var ex = getProfileExtra();
+    document.getElementById('profHomeName').textContent = (ex.name || auth.name || 'Profesor').split(' ')[0];
+    document.getElementById('profHomeDate').textContent = new Date().toLocaleDateString('es-CL', { weekday:'long', day:'numeric', month:'long' });
+
+    var st = countStats();
+    var pct = Math.round((st.ocup + st.res) / 110 * 100);
+    document.getElementById('profLibres').textContent = st.libre;
+    document.getElementById('profOcupTxt').textContent = pct + '% de ocupación · ' + st.ocup + ' ocupados';
+    document.getElementById('profBarFill').style.width = (100 - Math.round(st.libre/110*100)) + '%';
+
+    // Precargar patente guardada
+    var inp = document.getElementById('profPatente');
+    if (inp && !inp.value) inp.value = ex.patente || '';
+
+    actualizarEstadoIngresoProfesor();
+  }
+
+  function miEspacioActual() {
+    var ex = getProfileExtra();
+    for (var k in SPACES) {
+      var sp = SPACES[k];
+      if (sp.conductor === (ex.name || auth.name) && sp.estado === 'ocupado') return sp;
+    }
+    return null;
+  }
+
+  function actualizarEstadoIngresoProfesor() {
+    var pill = document.getElementById('profHomeStatus');
+    var entrarBtn = document.getElementById('profEntrarBtn');
+    var salirBtn  = document.getElementById('profSalirBtn');
+    var sp = miEspacioActual();
+    if (sp) {
+      pill.textContent = '🟢 Ingresado · Espacio E-' + (sp.numero || sp.id);
+      pill.className = 'prof-status-pill active';
+      if (entrarBtn) entrarBtn.style.display = 'none';
+      if (salirBtn)  salirBtn.style.display = 'block';
+    } else {
+      pill.textContent = '● Sin ingreso registrado';
+      pill.className = 'prof-status-pill';
+      if (entrarBtn) entrarBtn.style.display = 'block';
+      if (salirBtn)  salirBtn.style.display = 'none';
+    }
+  }
+
+  window.profesorRegistrarIngreso = function() {
+    var inp = document.getElementById('profPatente');
+    var pat = (inp.value || '').trim().toUpperCase();
+    if (pat.length < 5) { showToast('⚠ Ingresa una patente válida'); inp.focus(); return; }
+
+    // Guardar patente en perfil
+    var ex = getProfileExtra(); ex.patente = pat; setProfileExtra(ex);
+
+    // Buscar primer espacio libre
+    var libre = null;
+    var keys = Object.keys(SPACES).sort(function(a,b){ return a-b; });
+    for (var i=0;i<keys.length;i++){ if (SPACES[keys[i]].estado === 'libre'){ libre = SPACES[keys[i]]; break; } }
+    if (!libre) { showToast('❌ No hay espacios libres'); return; }
+
+    var hora = new Date().toTimeString().slice(0,5);
+    libre.estado = 'ocupado';
+    libre.conductor = ex.name || auth.name;
+    libre.patente = pat;
+    libre.hora = hora;
+
+    // Persistir en Supabase (el guardia lo verá por Realtime)
+    if (window.DuocAPI && window.DuocAPI.isOnline && window.DuocAPI.isOnline()) {
+      try { window.DuocAPI.cambiarEstadoEspacio(libre.numero || libre.id, 'OCUPADO'); } catch(e){}
+    }
+
+    if (typeof updateKPIs === 'function') updateKPIs();
+    renderProfesorHome();
+    showToast('✅ Ingreso registrado · Espacio E-' + (libre.numero||libre.id));
+  };
+
+  window.profesorRegistrarSalida = function() {
+    var sp = miEspacioActual();
+    if (!sp) { showToast('No tienes un ingreso activo'); return; }
+    sp.estado = 'libre'; sp.conductor = null; sp.patente = null; sp.hora = null;
+    if (window.DuocAPI && window.DuocAPI.isOnline && window.DuocAPI.isOnline()) {
+      try { window.DuocAPI.cambiarEstadoEspacio(sp.numero || sp.id, 'LIBRE'); } catch(e){}
+    }
+    if (typeof updateKPIs === 'function') updateKPIs();
+    renderProfesorHome();
+    showToast('👋 Salida registrada · Espacio E-' + (sp.numero||sp.id) + ' liberado');
+  };
+
+  /* ── AVATAR CON FOTO PERSONALIZADA ───────────────── */
+  function userAvatarHTML(size) {
+    var ex = getProfileExtra();
+    if (ex.photo) {
+      return '<img src="' + ex.photo + '" style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;object-fit:cover;display:block;">';
+    }
+    return window.personaAvatar(ex.name || auth.name, size);
+  }
+
+  window.changeProfilePhoto = function(ev) {
+    var file = ev.target.files && ev.target.files[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { showToast('⚠ La imagen debe pesar menos de 2MB'); return; }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var ex = getProfileExtra(); ex.photo = e.target.result; setProfileExtra(ex);
+      var ph = document.getElementById('phAvatar');
+      if (ph) ph.innerHTML = userAvatarHTML(80);
+      var sb = document.getElementById('sbAvatar');
+      if (sb) sb.innerHTML = userAvatarHTML(32);
+      showToast('✅ Foto de perfil actualizada');
+    };
+    reader.readAsDataURL(file);
+  };
 
   /* ── PROFILE ────────────────────────────────────── */
   function getProfileExtra() {
@@ -1186,7 +1410,7 @@
     var tel = ex.tel || '—';
     var pat = ex.patente || '—';
 
-    document.getElementById('phAvatar').innerHTML = window.personaAvatar(n, 80);
+    document.getElementById('phAvatar').innerHTML = userAvatarHTML(80);
     document.getElementById('phName').textContent  = n;
     document.getElementById('phCargo').textContent = c;
     document.getElementById('phEmail').textContent = e;
@@ -1292,7 +1516,7 @@
     var sbName = document.getElementById('sbName');
     if (sbName) sbName.textContent = auth.name;
     var sbAv = document.getElementById('sbAvatar');
-    if (sbAv) sbAv.innerHTML = window.personaAvatar(auth.name, 32);
+    if (sbAv) sbAv.innerHTML = userAvatarHTML(32);
 
     renderPerfil();
     toggleEditProfile();
@@ -2140,15 +2364,25 @@
   }
 
   /* ── INIT ───────────────────────────────────────── */
+  var esProfesorInit = (auth.role === 'profesor');
   buildSidebar();
   initClock();
   renderPerfil();
+
+  // Mostrar el panel correcto según rol
+  document.getElementById('profesorHome').style.display = esProfesorInit ? 'block' : 'none';
+  document.getElementById('adminHome').style.display    = esProfesorInit ? 'none' : 'block';
+
   // Cargar reservas en caché e inicializar
   loadReservationsCache(function() {
     setTimeout(function() {
-      initCharts(); chartsInit = true;
-      initMap();    mapInit = true;
+      if (!esProfesorInit) {
+        initCharts(); chartsInit = true;
+        initMap();    mapInit = true;
+      }
       initSupabase();
+      // Refrescar panel profesor con datos ya cargados
+      setTimeout(function(){ if (esProfesorInit) renderProfesorHome(); }, 400);
     }, 200);
   });
 
